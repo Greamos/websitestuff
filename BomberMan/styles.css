@@ -94,3 +94,6 @@ button:hover {
     background-repeat: no-repeat; /* used when rendering spritesheet as background */
     image-rendering: pixelated;    /* preserves pixel-art when scaled */
 }
+
+
+.grid-item[data-type="wall"] { background: #333; border: 2px solid #222; }

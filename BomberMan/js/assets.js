@@ -35,6 +35,12 @@ export const assets = {
         "right": { "row": 1, "start": 0, "count": 5 },
         "down": { "row": 0, "start": 0, "count": 5 }
       },
+      "walkEnd": {
+        "down": { "row": 0, "start": 4, "count": 1 },
+        "right": { "row": 1, "start": 4, "count": 1 },
+        "up": { "row": 2, "start": 4, "count": 1 },
+        "left": { "row": 3, "start": 4, "count": 1 }
+      },
       "liftIdle": {
         "down": { "row": 0, "start": 5, "count": 1 },
         "right": { "row": 1, "start": 5, "count": 1 },
@@ -82,12 +88,12 @@ export const assets = {
         "left": { "row": 3, "start": 16, "count": 2 }
       },
       "idle": {
-        "down": { "row": 0, "start": 0, "count": 1 },
-        "right": { "row": 1, "start": 0, "count": 1 },
-        "up": { "row": 2, "start": 0, "count": 1 },
-        "left": { "row": 3, "start": 0, "count": 1 }
+        "down": { "row": 0, "start": 2, "count": 1 },
+        "right": { "row": 1, "start": 2, "count": 1 },
+        "up": { "row": 2, "start": 2, "count": 1 },
+        "left": { "row": 3, "start": 2, "count": 1 }
       }
-    },    // per-frame frameBoxes removed (using globalFrameTrim now)
+    },   
   }
 
 }

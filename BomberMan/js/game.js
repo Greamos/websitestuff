@@ -2,11 +2,13 @@ import { createGrid } from './grid.js';
 import { Player } from './player.js';
 import { bindArrowKeys } from './input.js';
 import { assets, preloadAssets } from './assets.js';
+import { setWall } from './grid.js';
 
 const GRID_ID = 'game-grid';
 
 document.addEventListener('DOMContentLoaded', async () => {
   const gridApi = createGrid(GRID_ID, 10, 10);
+  setWall(gridApi);
 
   // preload assets (returns lookup path -> Image)
   const loaded = await preloadAssets(assets);

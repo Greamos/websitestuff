@@ -25,8 +25,21 @@ export function bindArrowKeys(player, gridApi, options = {}) {
     else if (direction === 'left') nx = Math.max(0, player.x - 1);
     else if (direction === 'right') nx = Math.min(gridApi.cols - 1, player.x + 1);
     if (nx === player.x && ny === player.y) return;
+    if (!isWalkable(nx, ny)) return;
     player.moveTo(gridApi, nx, ny);
   }
+
+  function isWalkable(x, y) {
+    const cell = gridApi.getCell(x, y);
+    if (!cell) return false;
+    return TILE_PROPS[cell.dataset.type]?.walkable === true;
+    return false;
+
+
+
+
+  }
+
 
   window.addEventListener('keydown', (e) => {
     const direction = getDirFromKey(e.key);

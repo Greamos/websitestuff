@@ -1,3 +1,27 @@
+  export const TILE_TYPE = { // for getting data on grid
+
+    EMPTY: 'empty',
+    wall: 'wall',
+    bomb: 'bomb',
+    explosion: 'explosion',
+    powerup: 'powerup',
+    box: 'box',
+    player: 'player',
+    playerspawn: 'playerspawn',
+
+  };
+
+  export const TILE_PROPS = {
+    [TILE_TYPE.EMPTY]: { walkable: true, },
+    [TILE_TYPE.wall]: { walkable: false, breakable: false },
+    [TILE_TYPE.box]: { walkable: false, breakable: true },
+    [TILE_TYPE.bomb]: { walkable: false, breakable: false },
+    [TILE_TYPE.explosion]: { walkable: true, breakable: false, damage: true },
+    [TILE_TYPE.powerup]: { walkable: true, breakable: false, powerup: true },
+    [TILE_TYPE.player]: { walkable: false, breakable: false, player: true },
+    [TILE_TYPE.playerspawn]: { walkable: true, breakable: false, spawn: true },
+  };
+
 export function createGrid(containerId, rows = 10, cols = 10) {
   const container = document.getElementById(containerId);
   if (!container) throw new Error(`No element with id ${containerId}`);
@@ -55,3 +79,7 @@ export function createGrid(containerId, rows = 10, cols = 10) {
 
   return api;
 }
+
+export function setWall(gridApi,){
+  gridApi.getCell(1, 0).dataset.type = TILE_TYPE.wall;
+};

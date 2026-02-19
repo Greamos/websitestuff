@@ -12,7 +12,7 @@ export class Player {
     this.facing = 'down'; // last-facing direction (used for directional idle frames)
     this.isWalking = false;
     this.isMoving = false;
-    this.moveDuration = options.moveDuration || 380; // movement animation duration
+    this.moveDuration = options.moveDuration || 350; // movement animation duration
 
     // spritesheet support
     this.loadedAssets = options.loadedAssets || null; // map from preloadAssets()
@@ -226,10 +226,37 @@ export class Player {
     }, interval);
   }
 
+  // play a finite sprite sequence once, then call onComplete (non-looping)
+  _playSpriteOnce(frames, fps, onComplete) {
+    this._stopSpriteLoop();
+    if (!frames || frames.length === 0) {
+      if (onComplete) onComplete();
+      return;
+    }
+    const interval = Math.max(1, Math.round(1000 / (fps || (assets.player && assets.player.fps) || 8)));
+    this._oneShotIndex = 0;
+    this._setSpriteFrameByIndex(frames[this._oneShotIndex]);
+    this._oneShotTimer = setInterval(() => {
+      this._oneShotIndex++;
+      if (this._oneShotIndex >= frames.length) {
+        clearInterval(this._oneShotTimer);
+        this._oneShotTimer = null;
+        if (onComplete) onComplete();
+        return;
+      }
+      this._setSpriteFrameByIndex(frames[this._oneShotIndex]);
+    }, interval);
+  }
+
   _stopSpriteLoop() {
     if (this._animTimer) {
       clearInterval(this._animTimer);
       this._animTimer = null;
+    }
+    if (this._oneShotTimer) {
+      clearInterval(this._oneShotTimer);
+      this._oneShotTimer = null;
+      this._oneShotIndex = 0;
     }
   }
 
@@ -328,6 +355,20 @@ export class Player {
 
     if (this.useSpritesheet) {
       this._stopSpriteLoop();
+
+      // if the sheet defines a short "stop"/"walkEnd" animation for this facing, play it once
+      const anims = assets && assets.player && assets.player.animations;
+      const transitionAnim = anims && (anims.walkEnd || anims.stop || anims['walk-stop']);
+      if (transitionAnim) {
+        const def = transitionAnim[this.facing] || transitionAnim;
+        const frames = this._framesFromDef(def);
+        if (frames && frames.length) {
+          // play the transition once, then revert to idle
+          this._playSpriteOnce(frames, assets.player.fps, () => this._setSpriteToIdle());
+          return;
+        }
+      }
+
       this._setSpriteToIdle();
       return;
     }
