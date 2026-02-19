@@ -1,0 +1,81 @@
+STEP 1 =-=-=-
+
+gebruik Bugs.js Diving.js Fish.js Met script in 1 ARRAY
+
+
+STEP 2 --=-=-
+
+Class voor pagina's
+    0 id
+    1 title
+    2 description
+    3 page_number
+    4 page_type (zoals: cover, information, contentlist of pagina)
+    5 object_array (welke dieren staan op deze pagina)
+
+STEP 3 =-=-=-
+Img check Opdracht-1.png 
+JS maakt 1 pagina per 9 animals, (deck of cards)
+
+STEP 4 -=-=-=
+https://www.w3schools.com/howto/howto_css_flip_card.asp, https://www.youtube.com/watch?v=0kD6ff2J3BQ
+
+Flip-Card principe om voor en achter kant pagina data te hebben 
+
+
+STEP 5 -=-=-=-
+
+COVER TIMEE + VOOR / NA WOORD
+COMBINE AND EVOLVE
+
+Check img 2- 3 -4
+
+
+Step 6-=-=-
+IMG 6, Click info. 
+
+
+BONUS =-=--
+
+INHOUDS OPGAVE AAN DE HAND VAN PAGINA CLASS ( STEP 2 )
+Bonus img 1
+
+wanneer klik ga naar die pagina
+
+
+
+
+// let data = new PaginaData();
+
+// data.id = 1;
+// data.title = "Animal Crossing Compendium";
+// data.description = "A comprehensive guide to bugs, fish, and diving items in Animal Crossing.";
+// data.page_number = 1;
+// data.page_type = "Compendium";
+// data.Object_array = SetupData();
+
+// console.log(data.title)
+
+// console.log('PaginaData populated:', data);
+
+
+
+
+.flip-page-front, .flip-page-back { /* shared front and back styles */
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    backface-visibility: hidden; 
+    background-image: url('/assets/paper.jpeg');
+    background-size: 100% 100%;
+    background-repeat: no-repeat;
+    box-shadow: 5px 5px 15px rgba(0,0,0,0.5);
+    border-radius: 2px;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr); 
+    grid-template-rows: repeat(3, 1fr);
+    gap: 10px;
+    padding: 20mm;
+    box-sizing: border-box;
+    border: 2px solid red;
+}

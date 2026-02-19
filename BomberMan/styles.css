@@ -1,0 +1,94 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: Arial, sans-serif;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.container {
+    background: white;
+    padding: 2rem 3rem;
+    border-radius: 10px;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+    text-align: center;
+}
+
+h1 {
+    color: #333;
+    margin-bottom: 1rem;
+    font-size: 2.5rem;
+}
+
+p {
+    color: #666;
+    margin-bottom: 1.5rem;
+    font-size: 1.1rem;
+}
+
+button {
+    background: #667eea;
+    color: white;
+    border: none;
+    padding: 0.75rem 2rem;
+    font-size: 1rem;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+button:hover {
+    background: #764ba2;
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+}
+
+/* Game grid styles */
+#game-grid {
+    display: grid;
+    grid-template-columns: repeat(10, 5rem);
+    justify-content: center;
+    margin: 0% auto;
+    position: relative;
+}
+
+.grid-item {
+    width: 5rem;
+    height: 5rem;
+    background: linear-gradient(180deg, #ffffff 0%, #f3f4f6 100%);
+    border: 1px solid rgba(0,0,0,0.08);
+    box-shadow: 0 3px 6px rgba(0,0,0,0.08);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: #222;
+    cursor: pointer;
+}
+
+.grid-item img {
+    width: 90%;
+    height: 90%;
+    object-fit: contain;
+    display: block;
+    pointer-events: none;
+}
+
+/* Floating player sprite placed absolutely inside #game-grid */
+.player-sprite {
+    position: absolute;
+    width: 3.6rem;
+    height: 3.6rem;
+    transform: translate(-50%, -50%);
+    transition: left var(--move-duration, 180ms) linear, top var(--move-duration, 180ms) linear;
+    pointer-events: none;
+    z-index: 10;
+}

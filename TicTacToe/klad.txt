@@ -1,0 +1,13 @@
+function performAIMove() {
+    // Simple AI: pick the first empty cell
+    for (let i = 0; i < cellStates.length; i++) {
+        // if (cellStates[i] === CellState.EMPTY) {
+        //     cellStates[i] = CellState.O;
+        //     gridItems[i].innerHTML = svgO;
+            canaiwin(3);
+            // after AI move, hand turn back to player
+            turnmanager();
+            break;
+        }
+    }
+// }

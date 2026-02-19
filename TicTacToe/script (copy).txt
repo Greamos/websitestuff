@@ -1,0 +1,371 @@
+// svg icons for X and O, stored as strings for easy insertion into grid cells
+const svgX = ` 
+<svg width="80" height="80" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+  <line x1="25" y1="25" x2="75" y2="75" stroke="#B44749" stroke-width="10" stroke-linecap="round" />
+  <line x1="75" y1="25" x2="25" y2="75" stroke="#B44749" stroke-width="10" stroke-linecap="round" />
+</svg>`;
+const svgO = `
+<svg width="80" height="80" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+  <circle cx="50" cy="50" r="35" stroke="#5E7E8F" stroke-width="10" fill="none" />
+</svg>`;
+
+
+
+const CellState = {
+    EMPTY: 'empty',
+    X: 'x',
+    O: 'o'
+};
+// the winning combo's
+const winningCombinations = [
+    [0, 1, 2], [3, 4, 5], [6, 7, 8], // Rows
+    [0, 3, 6], [1, 4, 7], [2, 5, 8], // Columns
+    [0, 4, 8], [2, 4, 6]             // Diagonals
+];
+
+const gridItems = [];
+const cellStates = []; // will be filled in createGrid
+let currentPlayer = CellState.X; // X starts first
+
+let aiMode = false; // AI mode flag
+let aiStart = false;
+let aiCheat = true;
+
+let wincheckarray = [];
+
+function startgamecheck() {
+    // return true only if all 9 cells exist and are EMPTY
+    return cellStates.length === 9 && cellStates.every(state => state === CellState.EMPTY);
+}
+
+function turnmanager() {
+    // swap current player
+    currentPlayer = (currentPlayer === CellState.X) ? CellState.O : CellState.X;
+    document.body.classList.toggle('dark-mode');
+    document.getElementById('btn_Player1').textContent = (currentPlayer === CellState.X) ? "Player 1" : "Player 2";    
+}
+
+function OnGridClick(index) {
+    const i = index - 1; // convert to 0-based
+
+    // bounds check
+    if (i < 0 || i >= cellStates.length) return;
+
+    // only allow placing on empty cell
+    if (cellStates[i] !== CellState.EMPTY) return;
+
+    // place current player's mark (state + visual)
+    cellStates[i] = currentPlayer;
+    gridItems[i].innerHTML = (currentPlayer === CellState.X) ? svgX : svgO;
+    checkWin();
+
+    // then swap turn
+    // console.log(cellStates)
+    turnmanager();
+
+    // if AI mode is on and it's AI's turn, perform AI move
+    if (aiMode && currentPlayer === CellState.O) {
+        // console.log("AI's turn");
+        performAIMove();
+    }
+}
+
+function checkWin() {
+   for (let i = 0; i < winningCombinations.length; i++) {
+        const combination = winningCombinations[i]; // Example: [0, 1, 2]
+
+        const indexA = combination[0]; // 0
+        const indexB = combination[1]; // 1
+        const indexC = combination[2]; // 2
+
+        const valueA = cellStates[indexA]; // 'x', 'o', or 'empty'
+        const valueB = cellStates[indexB];
+        const valueC = cellStates[indexC];
+
+        if (valueA !== CellState.EMPTY) {
+            if (valueA === valueB) {
+                if (valueA === valueC) {
+                    // console.log(`Player ${valueA.toUpperCase()} wins!`);
+                        drawline(indexA, indexC, valueA); // Draw line between first and third cell of the winning combo
+                    return valueA; // We have a winner
+                }
+            }
+        }
+    }
+    return null; // No winner yet
+}
+
+
+function drawline(FirstCell, SecondCell, winner) {
+
+    const gameGrid = document.getElementById('game-grid');
+    const gridRect = gameGrid.getBoundingClientRect();
+
+    const rect1 = gridItems[FirstCell].getBoundingClientRect(); // =-=-=-=-//
+    const centerX1 = rect1.left + rect1.width / 2; // this gets the center of the cell in terms of screen coordinates
+    const centerY1 = rect1.top + rect1.height / 2; // -=-=-=-=- //
+    // console.log(centerX1, centerY1);
+
+    const rect2 = gridItems[SecondCell].getBoundingClientRect(); // =-=-=-=-//
+    const centerX2 = rect2.left + rect2.width / 2; // this gets the center of the cell in terms of screen coordinates
+    const centerY2 = rect2.top + rect2.height / 2; // -=-=-=-=- //
+    //  console.log(centerX2, centerY2);
+
+        const svgNS = "http://www.w3.org/2000/svg";
+        const svg = document.createElementNS(svgNS, "svg");
+            
+            svg.style.position = "absolute";
+            svg.style.left = gridRect.left + "px";
+            svg.style.top = gridRect.top + "px";
+            svg.style.pointerEvents = "none"; // Let clicks pass through
+            svg.setAttribute("width", gridRect.width);
+            svg.setAttribute("height", gridRect.height);
+            svg.style.width = gridRect.width + "px";
+            svg.style.height = gridRect.height + "px";
+            svg.style.zIndex = 10;
+            svg.setAttribute("id", "win-line");
+
+
+                    const color = (winner === CellState.X)
+                    ? getComputedStyle(document.body).getPropertyValue('--line-x')
+                    : getComputedStyle(document.body).getPropertyValue('--line-o');
+                    
+
+                    const line = document.createElementNS(svgNS, "line");
+                    line.setAttribute("x1", centerX1 - gridRect.left);
+                    line.setAttribute("y1", centerY1 - gridRect.top);
+                    line.setAttribute("x2", centerX2 - gridRect.left);
+                    line.setAttribute("y2", centerY2 - gridRect.top);
+                    line.setAttribute("stroke", color.trim()); 
+                    line.setAttribute("stroke-width", "8");
+                    line.setAttribute("stroke-linecap", "round");
+
+            svg.appendChild(line);
+            document.body.appendChild(svg); // or overlay it on your grid
+}
+
+
+
+function createGrid() {
+    const gameGrid = document.getElementById('game-grid');
+    if (!gameGrid) return;
+
+    // clear in case of re-create
+    gameGrid.innerHTML = '';
+    gridItems.length = 0;
+    cellStates.length = 0;
+
+    for (let i = 1; i <= 9; i++) {
+        const griditem = document.createElement('div');
+        griditem.classList.add('grid-item');
+        griditem.dataset.index = i;
+        griditem.innerHTML = '';  // start empty
+        griditem.addEventListener('click', () => OnGridClick(i));
+        gameGrid.appendChild(griditem);
+        gridItems.push(griditem);
+        cellStates.push(CellState.EMPTY);
+    }
+
+    // CHECKER FOR CELLSTATES CONSOLE//
+       if (cellStates.length === 9) {
+        // console.log("Grid initialized:", cellStates);
+    }
+     
+}
+
+function resetBoard() {
+    cellStates.fill(CellState.EMPTY);
+    gridItems.forEach(item => item.innerHTML = '');
+    currentPlayer = CellState.X;
+    document.body.classList.remove('dark-mode');
+    document.querySelectorAll('#win-line').forEach(el => el.remove());
+}
+
+
+
+function aimodecheck(){
+    const aiBtn = document.getElementById('btn_AI');
+    if (!aiBtn) return;
+
+    aiMode = aiBtn.classList.contains('active'); // keep var in sync
+    if (aiMode) {
+        document.body.style.backgroundColor = getComputedStyle(aiBtn).getPropertyValue('background-color').trim();
+        resetBoard();
+        if (aiStart) {
+            currentPlayer = CellState.O; // ensure AI's turn before it moves
+            performAIMove();
+        }
+    } else {
+        // remove inline background so CSS (variables) apply again
+        document.body.style.backgroundColor = '';
+        resetBoard();
+    }
+}
+
+
+function performAIMove() {
+    // Simple AI: pick the first empty cell
+    wincheckarray.length = 0;
+    for (let i = 0; i < cellStates.length; i++) {
+        if (cellStates[i] !== CellState.EMPTY) continue;
+        checkforwinnings(i);
+        console.log('checking index', i);
+        }
+        
+        const immediateWin = wincheckarray.find(entry =>
+        winningCombinations.some(combo =>
+        combo.includes(entry.index) &&
+        combo.every(pos => pos === entry.index || cellStates[pos] === CellState.O)
+        )
+    );
+    if (immediateWin) {
+        console.log('AI immediate win at index', immediateWin.index);
+        chooseAIMove(immediateWin.index);
+        return;
+    }
+
+    const emptyCount = cellStates.filter(s => s === CellState.EMPTY).length;
+    const lastEmptyIndex = cellStates.findIndex(s => s === CellState.EMPTY);
+console.log('cheat-check:', { aiCheat, aiStart, currentPlayer, emptyCount, lastEmptyIndex });
+    // only trigger cheat when: cheat enabled, AI did NOT start the game,
+    // it's AI's turn, and there's exactly one empty cell left (valid index)
+    if (aiCheat && !aiStart && currentPlayer === CellState.O && emptyCount === 1 && lastEmptyIndex !== -1) {
+        triggerCheatAnimation(lastEmptyIndex);
+        return;
+    }
+
+        bubblesortcombo();
+    }
+
+
+
+function checkforwinnings(index) {
+    // Check if AI can win in the next move
+    let totalScore = 0;
+    // const combosForIndex = [];
+
+    for (let i = 0; i < winningCombinations.length; i++) { 
+        const combo = winningCombinations[i];
+        if (combo.includes(index)) {
+            totalScore += scorecombohelper(combo, index, cellStates, CellState.O);
+        }
+    }
+    // push the final count once (not on every iteration)
+        wincheckarray.push({ index: index, score: totalScore });
+        console.log(`checkforwinnings: index=${index} totalScore=${totalScore}`);
+}
+
+function bubblesortcombo() {
+    console.log("choosing move based on wincheckarray...");
+
+    // guard: nothing scored — pick the first empty cell (or bail out)
+    if (!wincheckarray || wincheckarray.length === 0) {
+        const fallbackIndex = cellStates.findIndex(s => s === CellState.EMPTY);
+        console.log('bubblesortcombo: no scores, falling back to', fallbackIndex);
+        if (fallbackIndex !== -1) chooseAIMove(fallbackIndex);
+        return;
+    }
+
+    // bubble-sort whole objects by their score (descending)
+    for (let i = 0; i < wincheckarray.length; i++) {
+        for (let j = 0; j < wincheckarray.length - i - 1; j++) {
+            if (wincheckarray[j].score < wincheckarray[j + 1].score) {
+                const tmp = wincheckarray[j];
+                wincheckarray[j] = wincheckarray[j + 1];
+                wincheckarray[j + 1] = tmp;
+            }
+        }
+    }
+
+    console.log('sorted wincheckarray:', wincheckarray);
+    chooseAIMove(wincheckarray[0].index);
+}
+
+function scorecombohelper(comboPositions, candidateIndex, boardState, aiMark) {
+    // opponent mark (assume two-player X/O)
+    const opponentMark = (aiMark === CellState.O) ? CellState.X : CellState.O;
+
+    // counts inside this combo (treat candidateIndex as if AI already occupies it)
+    let aiMarksInCombo = 0;
+    let opponentMarksInCombo = 0;
+
+    for (const pos of comboPositions) {
+        if (pos === candidateIndex) {
+            aiMarksInCombo++; // pretend AI is here
+        } else {
+            const state = boardState[pos];
+            if (state === aiMark) aiMarksInCombo++;
+            else if (state === opponentMark) opponentMarksInCombo++;
+        }  
+    }
+
+        const emptyPositions = comboPositions.filter(p => boardState[p] === CellState.EMPTY);
+    if (opponentMarksInCombo === 2 && emptyPositions.length === 1 && emptyPositions[0] === candidateIndex) {
+        return 900; // block opponent (priority below AI win but above other moves)
+    }
+
+
+    // blocked by opponent — no value
+    if (opponentMarksInCombo > 0){
+        console.log('scorecombohelper: combo blocked', comboPositions, 'candidate', candidateIndex);
+        return 0;
+    }
+
+    
+
+    let score = 1;
+    if (aiMarksInCombo >= 3) return 1000; // already/completed win (very high)
+    if (aiMarksInCombo === 2) return 100; // immediate winning move
+    if (aiMarksInCombo === 1) return 10;  // extends AI line
+
+    console.log('scorecombohelper:', { combo: comboPositions, candidateIndex, aiMarksInCombo, opponentMarksInCombo, score });
+    return score;
+}
+
+
+function chooseAIMove(index = 0) {
+    // Choose the move with the highest score from wincheckarray
+            if (cellStates[index] === CellState.EMPTY) {
+            cellStates[index] = CellState.O;
+            gridItems[index].innerHTML = svgO;
+            checkWin();
+            turnmanager();
+            }
+        }
+    
+
+function triggerCheatAnimation(targetIndex) {
+
+    console.log('Triggering cheat animation for index', targetIndex);
+}
+
+document.addEventListener('keydown', (event) => {
+    if (event.key === 'f' || event.key === 'F') {
+        console.log("The F key was pressed!");
+            document.body.classList.toggle('dark-mode');
+            console.log(cellStates);
+    } });
+
+
+document.addEventListener('DOMContentLoaded', () => {
+    createGrid();
+
+    if (aiStart && aiMode) {
+        currentPlayer = CellState.O; // make sure turn state matches — AI to move first
+        performAIMove();
+    }
+
+  
+
+    const resetBtn = document.querySelector('#btn_reset');
+    resetBtn?.addEventListener('click', () => {
+       resetBoard();
+    });
+
+    const aiBtn = document.getElementById('btn_AI');
+    aiBtn?.addEventListener('click', () => {
+    aiBtn.classList.toggle('active');
+    aimodecheck();
+    // handle enabling/disabling AI mode here
+});
+});

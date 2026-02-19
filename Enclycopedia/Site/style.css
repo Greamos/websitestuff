@@ -1,0 +1,208 @@
+body {
+    font-family: Arial, sans-serif;
+    margin: 0;
+    padding: 20px;
+    background-color: #2c2c2c; /* Dark background to make the paper pop */
+    
+    /* Center the paper on the screen */
+    display: flex;
+    justify-content: center;
+    /* margin-left: 700px; */
+    align-items: center;
+    min-height: 100vh;
+}
+
+.page-container {
+    /* 1. Dimensions of the page */
+    width: 210mm;
+    height: 297mm;
+    perspective: 1000px;
+    position: relative;
+}
+
+#pageSetup {
+    display: none;
+}
+
+
+ .flip-page-inner {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    text-align: center;
+    transition: transform 0.8s;
+    transform-style: preserve-3d;
+    transform-origin: left center; 
+
+}
+
+.flipped {
+    transform: rotateY(-180deg);
+}
+
+.flip-page-front, .flip-page-back { /* shared front and back styles */
+    position: absolute;
+    width: 69%;
+    height: 69%;
+    margin-top: 200px;
+    backface-visibility: hidden; 
+    background-image: url('/assets/paper.jpeg');
+    background-size: 100% 100%;
+    background-repeat: no-repeat;
+    box-shadow: 5px 5px 15px rgba(0,0,0,0.5);
+    border-radius: 2px;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr); 
+    grid-template-rows: repeat(3, 1fr);
+    gap: 10px;
+    padding: 10mm;
+    box-sizing: border-box;
+    
+    
+    
+}
+
+.flip-page-back {
+    transform: rotateY(180deg);
+}
+
+
+.grid-item {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+
+}
+
+.grid-item img {
+    width: 150px; 
+    height: 150px;
+    object-fit: contain;
+    
+}
+
+.page-number { /* bottom right corner page number */
+    position: absolute;
+    bottom: 10mm; 
+    right: 10mm;
+    font-size: 14px;
+    font-weight: bold;
+    color: #000000;
+}
+
+.cloned-page {
+    position: absolute;
+    top: 50%;
+    left: 75%;
+    transform: translate(-50%, -50%);
+    width: 210mm;
+    height: 297mm;
+    perspective: 1000px;
+    z-index: -1;
+    transition: transform 0.4s ease-in-out;
+
+}
+
+.cloned-page.active {
+    z-index: auto;
+}
+
+/* --- NEW ANIMATION LOGIC --- */
+
+/* Animation for going Back (Left to Right) */
+@keyframes flipToRightIndex {
+    0% { z-index: 50; }
+    5% { z-index: var(--z-start, 600); }    
+    49% { z-index: var(--z-start, 600); }   /* Hold Start Priorities */
+    51% { z-index: var(--z-end, 600); }     /* Swap to End Priorities */
+    100% { z-index: 50; }                   
+}
+
+/* Animation for going Next (Right to Left) */
+@keyframes flipToLeftIndex {
+    0% { z-index: var(--z-start, 600); }   
+    49% { z-index: var(--z-start, 600); }   /* Hold Start Priorities */
+    51% { z-index: var(--z-end, 600); }     /* Swap to End Priorities */
+    100% { z-index: 50; }  
+}
+
+/* Apply these classes via JS */
+.animating-next {
+    animation: flipToLeftIndex 0.8s forwards;
+    
+
+}
+
+.animating-prev {
+    animation: flipToRightIndex 0.8s forwards;
+}
+
+.cover-page{
+    background: #1f1f30;
+    background: linear-gradient(152deg,rgba(31, 31, 48, 1) 21%, rgba(187, 182, 204, 1) 88%, rgba(187, 182, 204, 1) 56%);
+    color: white;
+}
+
+.foreword, .afterword, .contents { 
+     grid-column: 1 / -1; /* Make text span all grid columns */
+    grid-row: 1 / -1;    /* Make text span all grid rows */
+    overflow-wrap: break-word;
+    color: rgb(0, 0, 0);
+    text-align: center;
+    
+}
+
+.foreword ul, .afterword ul, .contents ul {
+    list-style-type: none; /* Removes the dot */
+    padding: 0;            /* Removes default list indentation */
+    padding-top: 25px;
+    margin: 0;
+}
+
+/* New Popup Styles */
+.clickpage {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%); /* Start from exact center */
+    
+    width: 300px;           /* Fixed width */
+    height: 424px;          /* Fixed height matching A4 Aspect ratio (210:297) */
+    padding: 20px;
+    box-sizing: border-box; /* Ensures padding is included in the size */
+    
+    background-color: #f4e4bc; /* Paper color matches your theme */
+    background-image: url('/assets/paper.jpeg'); /* Optional: Match your book texture */
+    background-size: cover;
+    
+    box-shadow: 0 0 50px rgba(0,0,0,0.8); /* Strong shadow to separate from background */
+    border-radius: 5px;
+    z-index: 9999;          /* Ensures it is always on top */
+    
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center; /* Center content Vertically */
+    color: black;
+}
+
+.clickpage img {
+    max-width: 90%;
+    max-height: 50%;      /* Restrict height so title and button fit */
+    object-fit: contain;
+    margin-bottom: 15px;
+    border-radius: 4px;
+}
+
+.clickpage button {
+    margin-top: 15px;
+    padding: 8px 16px;
+    cursor: pointer;
+    background: #333;
+    color: white;
+    border: none;
+    border-radius: 4px;
+}
+
