@@ -1,7 +1,7 @@
 from PIL import Image
 import sys
 
-sheet = sys.argv[1] if len(sys.argv) > 1 else 'assets/bomberman_sheet V2.png'
+sheet = sys.argv[1] if len(sys.argv) > 1 else 'assets/bomberman_sheet_V2.png'
 im = Image.open(sheet).convert('RGBA')
 # frame size for V2 — each logical cell is 48×48
 fw,fh = 48,48

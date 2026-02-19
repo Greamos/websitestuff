@@ -91,4 +91,6 @@ button:hover {
     transition: left var(--move-duration, 180ms) linear, top var(--move-duration, 180ms) linear;
     pointer-events: none;
     z-index: 10;
+    background-repeat: no-repeat; /* used when rendering spritesheet as background */
+    image-rendering: pixelated;    /* preserves pixel-art when scaled */
 }

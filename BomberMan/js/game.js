@@ -12,9 +12,8 @@ document.addEventListener('DOMContentLoaded', async () => {
   const loaded = await preloadAssets(assets);
 
   // create a player and place at 0,0 (use provided bomberman image)
-  // we still pass the path; preloading warmed the browser cache and
-  // `loaded` allows access to Image objects if needed.
-  const player = new Player('p1', assets.player.idle);
+  // pass `loaded` so Player can consume preloaded spritesheet image for background-position math
+  const player = new Player('p1', assets.player.idle, { loadedAssets: loaded });
   player.place(gridApi, 0, 0);
 
   // allow moving with arrow keys; enable repeat-on-hold (true/false)
