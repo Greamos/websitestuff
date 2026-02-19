@@ -1,5 +1,6 @@
 export const assets = {
   player: {
+    // legacy single-image paths kept for backwards compatibility
     idle: 'assets/player/idle.png',
     walk: {
       up: 'assets/player/north.gif',
@@ -12,7 +13,32 @@ export const assets = {
       downleft: 'assets/player/south-west.gif',
     },
     bomb: 'assets/player/bomb.png',
-    explosion: 'assets/player/explosion.gif'
+    explosion: 'assets/player/explosion.gif',
+
+    // --- Spritesheet configuration (V2) ---
+    // Use `bomberman_sheet V2.png` — frames are 48×48 px.
+    // The Player class falls back to legacy images when `spritesheet` is absent.
+    spritesheet: 'assets/bomberman_sheet V2.png',
+    frameWidth: 48,
+    frameHeight: 48,
+    // optional fps for sprite animations
+    fps: 10,
+    // animations: arrays of frame-indices (left→right, top→bottom) OR
+    // shorthand objects like { row, start, count } — Player will normalize both.
+    // Adjust the indices/rows to match your actual sheet layout if needed.
+    animations: {
+      idle: [0],
+      walk: {
+        down: { row: 0, start: 0, count: 3 },
+        left: { row: 0, start: 3, count: 3 },
+        right: { row: 0, start: 6, count: 3 },
+        up: { row: 0, start: 9, count: 3 },
+        upleft: { row: 1, start: 0, count: 3 },
+        upright: { row: 1, start: 3, count: 3 },
+        downleft: { row: 1, start: 6, count: 3 },
+        downright: { row: 1, start: 9, count: 3 }
+      }
+    }
   }
 };
 

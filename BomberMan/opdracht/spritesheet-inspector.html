@@ -1,0 +1,502 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Spritesheet inspector</title>
+  <style>
+    body { font-family: Arial, sans-serif; padding: 1rem; }
+    .sheet { position: relative; display: inline-block; image-rendering: pixelated; }
+    .sheet img { display:block; image-rendering: pixelated; }
+    .overlay { position:absolute; left:0; top:0; cursor:crosshair; pointer-events:auto; }
+    .cell { position:absolute; border:1px solid rgba(255,255,255,0.08); box-sizing:border-box; font-size:9px; color:yellow; text-shadow: 0 0 2px black; }
+    .controls { margin-left: 1rem; max-width: 520px; }
+    .controls .row { display:flex; gap:8px; align-items:center; margin-bottom:8px; }
+    .controls select, .controls button, .controls input { padding:6px 8px; font-size:13px; }
+    .controls .assign-btn { background: #28a745; color: #fff; border-radius:4px; border: none; cursor: pointer; }
+    .controls .small { font-size:12px; padding:4px 6px; }
+    pre.snippet { background:#0b1220; color:#9fe8c9; padding:8px; border-radius:6px; max-height:200px; overflow:auto; font-size:12px; }
+    table { margin-left:1rem; border-collapse: collapse; }
+    td,th { border:1px solid #ddd; padding:6px 8px; }
+    .group { display:inline-block; padding:2px 6px; margin:2px; border-radius:4px; background:rgba(0,0,0,0.6); color:#fff; cursor:pointer; }
+    .highlight { outline:3px solid rgba(0,200,100,0.65); }
+  </style>
+</head>
+<body>
+  <h2>Spritesheet inspector — bomberman_sheet V2.png</h2>
+  <div style="display:flex;align-items:flex-start">
+    <div class="sheet">
+      <img id="sheetImg" src="../assets/bomberman_sheet V2.png" alt="sheet">
+      <canvas id="overlay" class="overlay"></canvas>
+    </div>
+    <div class="controls">
+      <h3>Detected frames (48×48)</h3>
+      <p>Columns: <strong id="colsCount">28</strong> × Rows: <strong id="rowsCount">5</strong> — total frames: <strong id="framesCount">140</strong></p>
+
+      <div class="row">
+        <label>Spritesheet:</label>
+        <select id="sheetSelect">
+          <option value="bomberman_sheet V2.png">bomberman_sheet V2.png</option>
+        </select>
+        <button id="reloadSheet" class="small">Reload</button>
+      </div>
+
+      <div class="row">
+        <label>Selected frames:</label>
+        <div id="selectedList">(none)</div>
+      </div>
+
+      <div class="row">
+        <select id="animSelect">
+          <option value="idle">idle</option>
+          <option value="walk">walk</option>
+          <option value="liftIdle">lift idle</option>
+          <option value="liftWalk">lift walk</option>
+          <option value="throw">throw</option>
+          <option value="punch">punch</option>
+          <option value="push">push</option>
+          <option value="jumpWarp">jump/warp</option>
+          <option value="stun">stun</option>
+          <option value="bomberCart">bomber cart</option>
+          <option value="waiting">waiting</option>
+          <option value="victory">victory</option>
+          <option value="drawGame">draw game</option>
+          <option value="minecart">minecart</option>
+          <option value="specialExploder">special exploder</option>
+          <option value="explode">explode</option>
+        </select>
+
+        <select id="directionSelect" style="display:none;">
+          <option value="down">down</option>
+          <option value="left">left</option>
+          <option value="right">right</option>
+          <option value="up">up</option>
+          <option value="upleft">upleft</option>
+          <option value="upright">upright</option>
+          <option value="downleft">downleft</option>
+          <option value="downright">downright</option>
+        </select>
+
+        <button id="assignBtn" class="assign-btn">Assign</button>
+        <button id="clearSel" class="small">Clear selection</button>
+      </div>
+
+      <div style="margin-top:8px; display:flex; gap:8px; align-items:center">
+        <button id="cropModeToggle" class="small">Crop mode</button>
+        <button id="autoFitSelected" class="small">Auto-fit selected</button>
+        <button id="clearCrops" class="small">Clear crops</button>
+      </div>
+
+      <div style="margin-top:8px;">
+        <strong>Assigned mappings</strong>
+        <table style="width:100%; margin-top:6px; border-collapse:collapse;">
+          <thead><tr><th style="width:40%">animation</th><th style="width:40%">definition</th><th style="width:20%">actions</th></tr></thead>
+          <tbody id="assignedTable"></tbody>
+        </table>
+        <div id="cropsSummary" style="margin-top:6px; color:#555">Crops: 0</div>
+      </div>
+
+      <div style="margin-top:10px; display:flex; gap:8px; align-items:center">
+        <button id="autoFill" class="small">Auto-fill walk/idle</button>
+        <button id="downloadJson" class="small">Download JSON</button>
+        <button id="copyJson" class="small">Copy JSON</button>
+        <button id="exportSnippet" class="small">Show assets.js snippet</button>
+      </div>
+
+      <div style="margin-top:10px;">
+        <label style="font-weight:600">Export preview (animations + frameBoxes)</label>
+        <pre id="exportPreview" class="snippet">(no mappings)</pre>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const fw = 48, fh = 48; let cols = 28, rows = 5;
+    let gridOffsetX = 0, gridOffsetY = 0; // source-pixel offsets (detected from markers)
+
+    function getDisplayCellSize(){ const rect = canvas.getBoundingClientRect(); return { cw: rect.width / cols, ch: rect.height / rows }; }
+    function getDisplayGridOffset(){ const rect = canvas.getBoundingClientRect(); return { ox: (gridOffsetX / img.naturalWidth) * rect.width, oy: (gridOffsetY / img.naturalHeight) * rect.height }; }
+    const img = document.getElementById('sheetImg');
+    const canvas = document.getElementById('overlay');
+    const ctx = canvas.getContext('2d');
+
+    // inspector state
+    const selected = new Set(); // indices
+    const mappingData = {}; // animations mapping
+    const frameBoxes = {}; // per-frame user/autofit crops: index -> {x,y,w,h} (source pixels)
+    let cellMeta = new Array(cols * rows).fill(null); // auto-detected bbox per cell
+    let cropMode = false;
+    let cropDrag = null; // { startCell, startPt, curPt }
+
+    function indexToRC(idx){ return { r: Math.floor(idx/cols), c: idx % cols }; }
+    function rcToIndex(r,c){ return r*cols + c; }
+
+    function drawIndices(){
+      // clear using CSS pixels (context is scaled to CSS px via setTransform)
+      ctx.clearRect(0,0,canvas.clientWidth, canvas.clientHeight);
+      const { cw, ch } = getDisplayCellSize();
+      const { ox, oy } = getDisplayGridOffset();
+      // grid
+      ctx.strokeStyle = 'rgba(255,255,255,0.06)'; ctx.lineWidth = 1;
+      ctx.fillStyle = 'rgba(255,255,0,0.9)'; ctx.font = '9px monospace';
+      for (let r=0;r<rows;r++){
+        for (let c=0;c<cols;c++){
+          const x = ox + c*cw, y = oy + r*ch;
+          ctx.strokeRect(x+0.5, y+0.5, cw-1, ch-1);
+          ctx.fillText(r*cols + c, x+3, y+11);
+        }
+      }
+    }
+
+    function drawSelected(){
+      const { cw, ch } = getDisplayCellSize();
+      const { ox, oy } = getDisplayGridOffset();
+      selected.forEach(idx => {
+        const {r,c} = indexToRC(idx);
+        const x = ox + c*cw, y = oy + r*ch;
+        ctx.fillStyle = 'rgba(30,144,255,0.25)'; ctx.fillRect(x+1, y+1, cw-2, ch-2);
+        ctx.strokeStyle = 'rgba(30,144,255,0.9)'; ctx.lineWidth = 2; ctx.strokeRect(x+1.5, y+1.5, cw-3, ch-3);
+      });
+    }
+
+    function drawAssigned(){
+      const { cw, ch } = getDisplayCellSize();
+      const { ox, oy } = getDisplayGridOffset();
+      // draw animations (green)
+      function drawForDef(def){
+        if (!def) return;
+        if (Array.isArray(def)){
+          def.forEach(idx => { const {r,c} = indexToRC(idx); ctx.strokeStyle = 'rgba(0,200,100,0.85)'; ctx.lineWidth = 2; ctx.strokeRect(ox + c*cw+2, oy + r*ch+2, cw-4, ch-4); });
+        } else if (typeof def === 'object' && def.row != null && def.start != null && def.count != null){
+          const r = def.row, start = def.start, count = def.count;
+          for (let i=0;i<count;i++){ const c = start + i; ctx.strokeStyle = 'rgba(0,200,100,0.85)'; ctx.lineWidth = 2; ctx.strokeRect(ox + c*cw+2, oy + r*ch+2, cw-4, ch-4); }
+        }
+      }
+      Object.entries(mappingData).forEach(([k,v]) => {
+        if (k === 'walk' && typeof v === 'object') Object.values(v).forEach(drawForDef);
+        else drawForDef(v);
+      });
+
+      // draw auto-detected cell bbox (dashed, subtle)
+      ctx.setLineDash([3,3]);
+      for (let idx=0; idx<cellMeta.length; idx++){
+        const meta = cellMeta[idx];
+        if (!meta || meta.empty) continue;
+        const {r,c} = indexToRC(idx);
+        const box = meta.bbox; // source px
+        const x = c*cw + (box.x / fw) * cw;
+        const y = r*ch + (box.y / fh) * ch;
+        const w = (box.w / fw) * cw;
+        const h = (box.h / fh) * ch;
+        ctx.strokeStyle = 'rgba(100,140,220,0.25)'; ctx.lineWidth = 1; ctx.strokeRect(x+1, y+1, w-2, h-2);
+      }
+      ctx.setLineDash([]);
+
+      // draw user/autofit frameBoxes (orange)
+      Object.entries(frameBoxes).forEach(([k,v]) => {
+        const idx = Number(k); const {r,c} = indexToRC(idx);
+        const x = c*cw + (v.x / fw) * cw;
+        const y = r*ch + (v.y / fh) * ch;
+        const w = (v.w / fw) * cw;
+        const h = (v.h / fh) * ch;
+        ctx.fillStyle = 'rgba(255,140,0,0.12)'; ctx.fillRect(x+1, y+1, w-2, h-2);
+        ctx.strokeStyle = 'rgba(255,140,0,0.95)'; ctx.lineWidth = 2; ctx.strokeRect(x+1, y+1, w-2, h-2);
+      });
+
+      // draw active crop-drag rectangle if any
+      if (cropDrag && cropDrag.rect){
+        const rect = cropDrag.rect;
+        ctx.strokeStyle = 'rgba(255,99,71,0.95)'; ctx.lineWidth = 2; ctx.strokeRect(rect.x, rect.y, rect.w, rect.h);
+      }
+    }
+
+    function redraw(){ drawIndices(); drawAssigned(); drawSelected(); updateSelectedList(); renderAssignedTable(); updateExportPreview(); updateCropsSummary(); }
+
+    // convert page coords -> cell/idx
+    function canvasCoordsToCell(x,y){
+      const rect = canvas.getBoundingClientRect();
+      const cx = x - rect.left, cy = y - rect.top;
+      // use display cell size (CSS pixels) and account for detected grid offset
+      const colWidth = rect.width / cols;
+      const rowHeight = rect.height / rows;
+      const { ox, oy } = getDisplayGridOffset();
+      const col = Math.floor((cx - ox) / colWidth);
+      const row = Math.floor((cy - oy) / rowHeight);
+      if (row < 0 || row >= rows || col < 0 || col >= cols) return null;
+      return { row, col, idx: rcToIndex(row,col), localX: cx - ox - col*colWidth, localY: cy - oy - row*rowHeight };
+    }
+
+    // -- sheet pixel analysis (auto-detect bbox per cell) --
+    let sheetCanvas = null; let sheetCtx = null;
+
+    // detect global grid offset by scanning blue marker pixels
+    function detectGridOffsetFromMarkers(ctx){
+      try{
+        const w = img.naturalWidth, h = img.naturalHeight;
+        const data = ctx.getImageData(0,0,w,h).data;
+        const xs = [];
+        const ys = [];
+        for (let y=0;y<h;y++){
+          for (let x=0;x<w;x++){
+            const i = (y*w + x)*4;
+            const r = data[i], g = data[i+1], b = data[i+2], a = data[i+3];
+            if (a > 32 && b > 120 && (b - Math.max(r,g) > 40)){
+              xs.push(x); ys.push(y);
+            }
+          }
+        }
+        if (xs.length === 0) { gridOffsetX = 0; gridOffsetY = 0; return; }
+        // compute mode of remainders mod fw/fh
+        const remX = new Array(fw).fill(0);
+        const remY = new Array(fh).fill(0);
+        xs.forEach(x => remX[x % fw]++);
+        ys.forEach(y => remY[y % fh]++);
+        const bestRx = remX.indexOf(Math.max(...remX));
+        const bestRy = remY.indexOf(Math.max(...remY));
+        // choose offset so that markers fall at roughly bestRx inside each cell
+        gridOffsetX = bestRx; gridOffsetY = bestRy;
+        // adjust cols/rows based on offset
+        cols = Math.floor((img.naturalWidth - gridOffsetX) / fw);
+        rows = Math.floor((img.naturalHeight - gridOffsetY) / fh);
+      } catch(e){ console.warn('detectGridOffsetFromMarkers failed', e); gridOffsetX = 0; gridOffsetY = 0; }
+    }
+
+    function computeCellMeta(){
+      // create offscreen at natural size (source pixels)
+      sheetCanvas = document.createElement('canvas');
+      sheetCanvas.width = img.naturalWidth; sheetCanvas.height = img.naturalHeight;
+      sheetCtx = sheetCanvas.getContext('2d');
+      sheetCtx.drawImage(img, 0, 0, sheetCanvas.width, sheetCanvas.height);
+
+      // detect global grid offset from blue markers first (so grid aligns to image)
+      detectGridOffsetFromMarkers(sheetCtx);
+
+      cellMeta = new Array(cols * rows).fill(null);
+
+      // helper to detect blue marker pixels inside a cell
+      function isBlue(r,g,b,a){
+        if (a < 32) return false;
+        return (b > 120) && (b - Math.max(r,g) > 40);
+      }
+
+      for (let r=0;r<rows;r++){
+        for (let c=0;c<cols;c++){
+          const sx = gridOffsetX + c * fw, sy = gridOffsetY + r * fh;
+          try{
+            const data = sheetCtx.getImageData(sx, sy, fw, fh).data;
+            let minX = fw, minY = fh, maxX = -1, maxY = -1;
+            let minBX = fw, minBY = fh, maxBX = -1, maxBY = -1; // blue marker bbox
+            for (let yy=0; yy<fh; yy++){
+              for (let xx=0; xx<fw; xx++){
+                const i = (yy*fw + xx)*4;
+                const rr = data[i], gg = data[i+1], bb = data[i+2], aa = data[i+3];
+                // non-transparent content bounds
+                if (aa > 16){ if (xx < minX) minX = xx; if (yy < minY) minY = yy; if (xx > maxX) maxX = xx; if (yy > maxY) maxY = yy; }
+                // marker detection
+                if (isBlue(rr,gg,bb,aa)){
+                  if (xx < minBX) minBX = xx; if (yy < minBY) minBY = yy; if (xx > maxBX) maxBX = xx; if (yy > maxBY) maxBY = yy;
+                }
+              }
+            }
+            const idx = r*cols + c;
+            if (maxX === -1){
+              if (maxBX !== -1){
+                cellMeta[idx] = { empty: true, marker: true, markerBBox: { x: minBX, y: minBY, w: maxBX-minBX+1, h: maxBY-minBY+1 } };
+              } else {
+                cellMeta[idx] = { empty: true };
+              }
+            } else {
+              const bbox = { x: minX, y: minY, w: (maxX-minX+1), h: (maxY-minY+1) };
+              const out = { empty: false, bbox };
+              if (maxBX !== -1) out.markerBBox = { x: minBX, y: minBY, w: maxBX-minBX+1, h: maxBY-minBY+1 };
+              cellMeta[idx] = out;
+            }
+          } catch(e){ cellMeta[r*cols + c] = { empty: true }; }
+        }
+      }
+    }
+
+    // mouse handling (selection OR crop mode)
+    canvas.addEventListener('mousedown', (ev) => {
+      const cell = canvasCoordsToCell(ev.clientX, ev.clientY);
+      if (!cell) return;
+      if (cropMode){
+        cropDrag = { startCell: { r: cell.row, c: cell.col }, startPt: { x: ev.clientX, y: ev.clientY }, rect: null };
+        return;
+      }
+      // normal selection
+      let dragging = true; // local
+      dragStart = cell; lastSelected = cell.idx;
+      if (!ev.shiftKey && !ev.ctrlKey) selected.clear();
+      selected.add(cell.idx);
+      redraw();
+      window.addEventListener('mousemove', selDragMove);
+      window.addEventListener('mouseup', function selDragUp(){ window.removeEventListener('mousemove', selDragMove); window.removeEventListener('mouseup', selDragUp); dragStart = null; });
+
+      function selDragMove(ev2){
+        const cell2 = canvasCoordsToCell(ev2.clientX, ev2.clientY); if (!cell2) return;
+        const r0 = Math.min(dragStart.row, cell2.row), r1 = Math.max(dragStart.row, cell2.row);
+        const c0 = Math.min(dragStart.col, cell2.col), c1 = Math.max(dragStart.col, cell2.col);
+        selected.clear();
+        for (let r=r0;r<=r1;r++) for (let c=c0;c<=c1;c++) selected.add(rcToIndex(r,c));
+        redraw();
+      }
+    });
+
+    window.addEventListener('mousemove', (ev)=>{
+      if (!cropDrag) return;
+      const rectBounds = canvas.getBoundingClientRect();
+      const cellW = rectBounds.width / cols, cellH = rectBounds.height / rows;
+      const sx = Math.min(ev.clientX, cropDrag.startPt.x);
+      const sy = Math.min(ev.clientY, cropDrag.startPt.y);
+      const ex = Math.max(ev.clientX, cropDrag.startPt.x);
+      const ey = Math.max(ev.clientY, cropDrag.startPt.y);
+      // restrict to the same start cell area
+      const baseX = cropDrag.startCell.c * cellW + rectBounds.left;
+      const baseY = cropDrag.startCell.r * cellH + rectBounds.top;
+      cropDrag.rect = { x: Math.max(baseX, sx) - rectBounds.left, y: Math.max(baseY, sy) - rectBounds.top, w: Math.min(ex, baseX+cellW) - Math.max(sx, baseX), h: Math.min(ey, baseY+cellH) - Math.max(sy, baseY) };
+      if (cropDrag.rect.w < 0) cropDrag.rect.w = 0; if (cropDrag.rect.h < 0) cropDrag.rect.h = 0;
+      redraw();
+    });
+
+    window.addEventListener('mouseup', (ev)=>{
+      if (!cropDrag) return;
+      // convert cropDrag.rect (display pixels inside cell) -> source bbox for that cell
+      const rectBounds = canvas.getBoundingClientRect();
+      const cw = rectBounds.width / cols, ch = rectBounds.height / rows;
+      const box = cropDrag.rect;
+      if (box && box.w > 2 && box.h > 2){
+        const idx = rcToIndex(cropDrag.startCell.r, cropDrag.startCell.c);
+        // normalized coords inside cell
+        const nx = box.x / cw, ny = box.y / ch, nw = box.w / cw, nh = box.h / ch;
+        const sx = Math.round(nx * fw), sy = Math.round(ny * fh), sw = Math.round(nw * fw), sh = Math.round(nh * fh);
+        frameBoxes[idx] = { x: Math.max(0, sx), y: Math.max(0, sy), w: Math.max(1, sw), h: Math.max(1, sh) };
+      }
+      cropDrag = null; redraw();
+    });
+
+    // helpers: selected list, assigned table, crops summary
+    function updateSelectedList(){ const el = document.getElementById('selectedList'); el.textContent = selected.size ? Array.from(selected).slice(0,40).join(', ') + (selected.size>40?' ...':'') : '(none)'; }
+    function updateCropsSummary(){
+      const cropCount = Object.keys(frameBoxes).length;
+      const markerCount = cellMeta ? cellMeta.filter(m => m && m.markerBBox).length : 0;
+      document.getElementById('cropsSummary').textContent = `Crops: ${cropCount} · Markers detected: ${markerCount}`;
+    }
+
+    function framesToDef(indices){ if (!indices || indices.length===0) return null; const sorted = indices.slice().sort((a,b)=>a-b); const rowsSet = new Set(sorted.map(i=>Math.floor(i/cols))); if (rowsSet.size === 1){ const r = Math.floor(sorted[0]/cols); const colsOnly = sorted.map(i=>i%cols); const minC = Math.min(...colsOnly); const maxC = Math.max(...colsOnly); if (maxC - minC + 1 === colsOnly.length) return { row: r, start: minC, count: colsOnly.length }; } return sorted; }
+
+    function setMapping(keyPath, def){ const parts = keyPath.split('.'); let cur = mappingData; for (let i=0;i<parts.length-1;i++){ const p = parts[i]; if (!cur[p]) cur[p] = {}; cur = cur[p]; } cur[parts[parts.length-1]] = def; redraw(); }
+    function removeMapping(keyPath){ const parts = keyPath.split('.'); let cur = mappingData; for (let i=0;i<parts.length-1;i++){ cur = cur[parts[i]]; if (!cur) return; } delete cur[parts[parts.length-1]]; redraw(); }
+
+    // UI wiring
+    const animSelect = document.getElementById('animSelect');
+    const dirSelect = document.getElementById('directionSelect');
+    const assignBtn = document.getElementById('assignBtn');
+    const clearSelBtn = document.getElementById('clearSel');
+    const assignedTable = document.getElementById('assignedTable');
+    const autoFillBtn = document.getElementById('autoFill');
+    const autoFitBtn = document.getElementById('autoFitSelected');
+    const clearCropsBtn = document.getElementById('clearCrops');
+    const cropModeToggle = document.getElementById('cropModeToggle');
+    const sheetSelect = document.getElementById('sheetSelect');
+    const reloadSheet = document.getElementById('reloadSheet');
+    const downloadBtn = document.getElementById('downloadJson');
+    const copyBtn = document.getElementById('copyJson');
+    const exportBtn = document.getElementById('exportSnippet');
+    const exportPreview = document.getElementById('exportPreview');
+
+    animSelect.addEventListener('change', ()=>{ dirSelect.style.display = (animSelect.value === 'walk') ? 'inline-block' : 'none'; });
+
+    assignBtn.addEventListener('click', ()=>{ if (selected.size === 0){ alert('Select one or more frames first (click/drag)'); return; } const label = animSelect.value; const indices = Array.from(selected).sort((a,b)=>a-b); const def = framesToDef(indices); if (label === 'walk'){ const dir = dirSelect.value || 'down'; setMapping(`walk.${dir}`, def); } else { setMapping(label, def); } });
+    clearSelBtn.addEventListener('click', ()=>{ selected.clear(); redraw(); });
+
+    cropModeToggle.addEventListener('click', ()=>{ cropMode = !cropMode; cropModeToggle.style.background = cropMode ? '#ffc107' : ''; cropModeToggle.textContent = cropMode ? 'Crop mode (ON)' : 'Crop mode'; });
+
+    autoFitBtn.addEventListener('click', ()=>{
+      if (selected.size === 0) return alert('Select frames first');
+      Array.from(selected).forEach(idx => {
+        const meta = cellMeta[idx];
+        if (meta){
+          // prefer explicit marker bbox (blue-cube) when present — it's what you added to the V2 sheet
+          if (meta.markerBBox) frameBoxes[idx] = meta.markerBBox;
+          else if (!meta.empty) frameBoxes[idx] = meta.bbox;
+          else frameBoxes[idx] = { x:0,y:0,w:fw,h:fh };
+        } else {
+          frameBoxes[idx] = { x:0,y:0,w:fw,h:fh };
+        }
+      });
+      redraw();
+    });
+    clearCropsBtn.addEventListener('click', ()=>{ for (const k of Object.keys(frameBoxes)) delete frameBoxes[k]; redraw(); });
+
+    function renderAssignedTable(){ const rows = []; function pushRow(k, def){ const repr = (Array.isArray(def) ? '['+def.join(',')+']' : `{ row: ${def.row}, start: ${def.start}, count: ${def.count} }`); rows.push({k, repr}); }
+      Object.entries(mappingData).forEach(([k,v]) => { if (k === 'walk') Object.entries(v).forEach(([d,def]) => pushRow(`walk.${d}`, def)); else pushRow(k, v); });
+      if (rows.length === 0){ assignedTable.innerHTML = '<tr><td colspan="3">(no mappings)</td></tr>'; return; }
+      assignedTable.innerHTML = rows.map(r => `
+        <tr>
+          <td>${r.k}</td>
+          <td><code>${r.repr}</code></td>
+          <td><button data-key="${r.k}" class="small remove-mapping">Remove</button> <button data-key="${r.k}" class="small show-mapping">Highlight</button></td>
+        </tr>
+      `).join('');
+      assignedTable.querySelectorAll('.remove-mapping').forEach(b=> b.addEventListener('click', ev=> { removeMapping(ev.target.dataset.key); }));
+      assignedTable.querySelectorAll('.show-mapping').forEach(b=> b.addEventListener('click', ev=> { highlightMapping(ev.target.dataset.key); })); }
+
+    function highlightMapping(keyPath){
+      drawIndices();
+      const parts = keyPath.split('.');
+      let def = mappingData[parts[0]]; if (!def) return; if (parts.length>1) def = def[parts[1]]; if (!def) return;
+      const { cw, ch } = getDisplayCellSize();
+      function drawForDef(d){
+        if (Array.isArray(d)){
+          d.forEach(idx=>{ const {r,c} = indexToRC(idx); ctx.strokeStyle='rgba(255,140,0,0.95)'; ctx.lineWidth=3; ctx.strokeRect(c*cw+2, r*ch+2, cw-4, ch-4); });
+        } else if (d && d.row!=null){
+          for (let i=0;i<d.count;i++){ const c = d.start+i; ctx.strokeStyle='rgba(255,140,0,0.95)'; ctx.lineWidth=3; ctx.strokeRect(c*cw+2, d.row*ch+2, cw-4, ch-4); }
+        }
+      }
+      drawForDef(def);
+    }
+
+    function formatExportJSON(){ return JSON.stringify({ animations: mappingData, frameBoxes: frameBoxes }, null, 2); }
+    function updateExportPreview(){ exportPreview.textContent = formatExportJSON(); }
+
+    // download/copy include frameBoxes now
+    downloadBtn.addEventListener('click', ()=>{ const payload = { animations: mappingData, frameBoxes: frameBoxes }; const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' }); const url = URL.createObjectURL(blob); const a = document.createElement('a'); a.href = url; a.download = 'bomberman_animations_with_crops.json'; document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url); });
+    copyBtn.addEventListener('click', async ()=>{ try{ await navigator.clipboard.writeText(formatExportJSON()); alert('JSON copied to clipboard'); } catch(e){ alert('Clipboard copy failed — use Download JSON'); } });
+    exportBtn.addEventListener('click', ()=>{ updateExportPreview(); window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' }); });
+
+    // sheet selection
+    sheetSelect.addEventListener('change', ()=>{ img.src = `../assets/${sheetSelect.value}`; });
+    reloadSheet.addEventListener('click', ()=>{ img.src = `../assets/${sheetSelect.value}`; });
+
+    // compute cellMeta when sheet image finishes loading
+function initCanvas(){
+      // compute dynamic cols/rows from the natural image size
+      cols = Math.floor(img.naturalWidth / fw) || 28;
+      rows = Math.floor(img.naturalHeight / fh) || 5;
+
+      // make canvas match displayed image size *and* handle high-DPI/zoom correctly
+      const dpr = window.devicePixelRatio || 1;
+      const displayW = img.clientWidth;
+      const displayH = img.clientHeight;
+      canvas.style.width = displayW + 'px';
+      canvas.style.height = displayH + 'px';
+      canvas.width = Math.round(displayW * dpr);
+      canvas.height = Math.round(displayH * dpr);
+      // keep drawing coordinates in CSS pixels by scaling context
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+      // update UI grid info
+      document.getElementById('colsCount').textContent = cols;
+      document.getElementById('rowsCount').textContent = rows;
+      document.getElementById('framesCount').textContent = (cols * rows);
+      try{ computeCellMeta(); } catch(e){ console.warn('computeCellMeta failed', e); }
+      redraw();
+    }
+
+    img.addEventListener('load', initCanvas);
+    window.addEventListener('resize', () => { if (img.complete) initCanvas(); });
+    if (img.complete) initCanvas();
+
+  </script>
+</body>
+</html>
