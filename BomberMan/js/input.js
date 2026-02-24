@@ -102,12 +102,20 @@ function isWalkable(x, y) {
     }
   });
 
-  window.addEventListener('keyup', (e) => {
+  window.addEventListener('keydown', (e) => {
     const direction = getDirFromKey(e.key);
-    if (!direction) return;
-    if (activeKey === direction) {
-      activeKey = null;
+      if (!direction) return;
+      if (activeKey === direction) {
+        activeKey = null;
       if (repeatTimer) { clearInterval(repeatTimer); repeatTimer = null; }
     }
   });
+
+  window.addEventListener('keydown', (e) => {
+    if (e.code === 'Space') {
+      e.preventDefault();
+      console.log('spacebar pressed - you can trigger bomb planting here!');
+      player.placeBomb(gridApi);
+    }
+});
 }

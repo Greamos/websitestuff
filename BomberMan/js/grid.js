@@ -31,10 +31,8 @@ export function createGrid(containerId, rows = 10, cols = 10) {
 const api = {
   // DOM element that contains the whole grid
   container,
-  // grid size
   rows,
   cols,
-
   // return the <div> for the given x,y coordinates (or null if off‑grid)
   getCell(x, y) {
     return container.querySelector(
@@ -80,7 +78,7 @@ const api = {
     const cell = api.getCell(x, y);
     if (!cell) return;
 
-    cell.innerHTML = '';            // wipe previous contents
+    cell.innerHTML = '';    // wipe previous contents
     if (!content) return;
 
     const img = document.createElement('img');

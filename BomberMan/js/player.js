@@ -1,4 +1,5 @@
 import { assets } from './assets.js';
+import { TILE_TYPE } from './grid.js';
 
 export class Player {
   // options: { moveDuration: number (ms), loadedAssets: { [path]: Image } }
@@ -382,6 +383,17 @@ export class Player {
     this.moveDuration = ms;
     if (this.img) this.img.style.setProperty('--move-duration', `${ms}ms`);
   }
+
+placeBomb(gridApi) {
+
+console.log('Bomb planted at', this.x, this.y);
+this.gridApi.setType(this.x, this.y, TILE_TYPE.bomb);
+
 }
+
+}
+
+
+
 
 
