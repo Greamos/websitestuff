@@ -97,3 +97,8 @@ button:hover {
 
 
 .grid-item[data-type="wall"] { background: #333; border: 2px solid #222; }
+.grid-item[data-type="box"] { background: #a0522d; border: 2px solid #8b4513; }
+.grid-item[data-type="bomb"] { background: #000; border: 2px solid #555; }
+.grid-item[data-type="explosion"] { background: radial-gradient(circle, #ff0000 0%, #ff4500 70%, transparent 80%); border: none; }      
+.grid-item[data-type="playerspawn"] { background: #4caf50; border: 2px dashed #388e3c; }  
+.grid-item[data-type="player1spot"] { border: 2px dashed red; }

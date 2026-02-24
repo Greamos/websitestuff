@@ -1,4 +1,4 @@
-  export const TILE_TYPE = { // for getting data on grid
+export const TILE_TYPE = { // for getting data on grid
 
     EMPTY: 'empty',
     wall: 'wall',
@@ -8,7 +8,7 @@
     box: 'box',
     player: 'player',
     playerspawn: 'playerspawn',
-
+    player1spot: 'player1spot',
   };
 
   export const TILE_PROPS = {
@@ -20,6 +20,7 @@
     [TILE_TYPE.powerup]: { walkable: true, breakable: false, powerup: true },
     [TILE_TYPE.player]: { walkable: false, breakable: false, player: true },
     [TILE_TYPE.playerspawn]: { walkable: true, breakable: false, spawn: true },
+    [TILE_TYPE.player1spot]: { walkable: true, breakable: false,},
   };
 
 export function createGrid(containerId, rows = 10, cols = 10) {
@@ -27,45 +28,76 @@ export function createGrid(containerId, rows = 10, cols = 10) {
   if (!container) throw new Error(`No element with id ${containerId}`);
   container.innerHTML = '';
 
-  const api = {
-    container,
-    rows,
-    cols,
-    getCell(x, y) {
-      return container.querySelector(`.grid-item[data-x="${x}"][data-y="${y}"]`);
-    },
-    setTile(x, y, content) {
-      const cell = api.getCell(x, y);
-      if (!cell) return;
-      cell.innerHTML = '';
-      if (!content) return;
-      if (typeof content === 'string') {
-        // if looks like an image path/URL, create an img
-        if (/(\.png|\.jpg|\.jpeg|\.gif|\.webp)$/i.test(content) || content.startsWith('http') ) {
-          const img = document.createElement('img');
-          img.src = content;
-          img.alt = `tile-${x}-${y}`;
-          cell.appendChild(img);
-        } else {
-          cell.textContent = content;
-        }
-      } else if (content instanceof Node) {
-        cell.appendChild(content);
-      } else if (content.src) {
-        const img = document.createElement('img');
-        img.src = content.src;
-        img.alt = content.alt || `tile-${x}-${y}`;
-        cell.appendChild(img);
-      }
-    },
-    clearTile(x, y) {
-      const cell = api.getCell(x, y);
-      if (!cell) return;
-      cell.innerHTML = '';
-    }
-  };
+const api = {
+  // DOM element that contains the whole grid
+  container,
+  // grid size
+  rows,
+  cols,
 
-  // build cells
+  // return the <div> for the given x,y coordinates (or null if off‑grid)
+  getCell(x, y) {
+    return container.querySelector(
+      `.grid-item[data-x="${x}"][data-y="${y}"]`
+    );
+  },
+
+  // read the current type string stored in data-type
+  getType(x, y) {
+    const cell = api.getCell(x, y);
+    return cell ? cell.dataset.type : null;
+  },
+
+  // set the type on a cell and toggle a matching CSS class
+  setType(x, y, type = TILE_TYPE.EMPTY) {
+    const cell = api.getCell(x, y);
+    if (!cell) return;              // out‑of‑bounds guard
+
+    cell.dataset.type = type;
+    cell.title = `(${x},${y}) ${type}`
+               + (TILE_PROPS[type].walkable ? ' ✔' : ' ✖')
+               + (TILE_PROPS[type].breakable ? ' – breakable' : '');
+                  
+    // remove any of the tile‑<type> classes that might already be there
+    Object.values(TILE_TYPE).forEach(t =>
+      cell.classList.remove(`tile-${t}`)
+    );
+    if (type) cell.classList.add(`tile-${type}`);
+  },
+
+  // helpers built on getType
+  isType(x, y, type) {
+    return api.getType(x, y) === type;
+  },
+
+  isWalkable(x, y) {
+    const t = api.getType(x, y);
+    return TILE_PROPS[t]?.walkable === true;
+  },
+
+  // clear a cell and put an image in it (uses a URL or an object with .src)  is helper function can be called
+  setTile(x, y, content) {
+    const cell = api.getCell(x, y);
+    if (!cell) return;
+
+    cell.innerHTML = '';            // wipe previous contents
+    if (!content) return;
+
+    const img = document.createElement('img');
+    img.src = typeof content === 'string' ? content : content.src;
+    img.alt = `tile-${x}-${y}`;
+    cell.appendChild(img);
+  },
+
+  // remove anything inside a cell
+  clearTile(x, y) {
+    const cell = api.getCell(x, y);
+    if (!cell) return;
+    cell.innerHTML = '';
+  }
+};
+
+  // build cells ( THE GRIDDDDDDDD )
   for (let y = 0; y < rows; y++) {
     for (let x = 0; x < cols; x++) {
       const cell = document.createElement('div');
@@ -73,6 +105,7 @@ export function createGrid(containerId, rows = 10, cols = 10) {
       cell.dataset.x = x;
       cell.dataset.y = y;
       cell.dataset.index = y * cols + x;
+      cell.dataset.type = TILE_TYPE.EMPTY;  // default type so walkable checks work
       container.appendChild(cell);
     }
   }
@@ -80,6 +113,51 @@ export function createGrid(containerId, rows = 10, cols = 10) {
   return api;
 }
 
-export function setWall(gridApi,){
-  gridApi.getCell(1, 0).dataset.type = TILE_TYPE.wall;
-};
+export function exportMap(gridApi) {
+  const maparray = [];
+
+  for (let y = 0; y < gridApi.rows; y += 1) {      // outer loop = rows
+    const row = [];
+    for (let x = 0; x < gridApi.cols; x += 1) {    // inner loop = cols
+      // call the API just as you would call a Blueprint function node
+      row.push(gridApi.getType(x, y) || TILE_TYPE.EMPTY);
+    }
+    maparray.push(row);
+  }
+
+  return maparray;
+}
+
+export function buildFromMap(gridApi, map) {
+  const code2type = {
+    0: TILE_TYPE.EMPTY,
+    1: TILE_TYPE.wall,
+    2: TILE_TYPE.box,
+    3: TILE_TYPE.playerspawn,
+    4: TILE_TYPE.powerup,
+    5: TILE_TYPE.player1spot,
+  };
+  console.log('building from map:');
+  for (let y = 0; y < map.length; y += 1) {
+    for (let x = 0; x < map[y].length; x += 1) {
+      const type = map[y] && map[y][x];
+      gridApi.setType(x, y, code2type[type] || TILE_TYPE.EMPTY);
+    }
+  }
+}
+
+export function findSpawn(map) { // find spawn point in map and return coordinates as {x,y}
+  for (let y = 0; y < map.length; y += 1) {
+    for (let x = 0; x < map[y].length; x += 1) {
+      if (map[y][x] === 3) return { x, y };
+    }
+  }
+  return null;
+}
+
+
+
+export function setWall(gridApi) {
+  gridApi.setType ? gridApi.setType(1, 0, TILE_TYPE.wall)
+                  : (gridApi.getCell(1, 0).dataset.type = TILE_TYPE.wall);
+}
