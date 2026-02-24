@@ -386,7 +386,7 @@ export class Player {
 
 placeBomb(gridApi) {
 
-console.log('Bomb planted at', this.x, this.y);
+console.log('Bomb planted at1', this.x, this.y);
 this.gridApi.setType(this.x, this.y, TILE_TYPE.bomb);
 
 }
