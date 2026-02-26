@@ -3,14 +3,23 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Hello World</title>
+    <title>Hello Bomberman</title>
     <link rel="stylesheet" href="styles.css">
 </head>
 <body>
+
+      <div class="heartbeat-monitor">
+            <div id="light-1" class="light active"></div>
+            <div id="light-2" class="light"></div>
+            <span id="ms-display">0ms</span>
+        </div>
+
    <div class="layout">
     <div class="gamesetup"> </div>
         <h1>Bomberman</h1>
         <div id="game-grid"></div>
+
+      
     
     <script type="module" src="js/game.js"></script>
 </body>

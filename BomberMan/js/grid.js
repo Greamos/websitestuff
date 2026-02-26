@@ -33,6 +33,25 @@ const api = {
   container,
   rows,
   cols,
+  // numeric<->string tile mappings used as single source of truth
+  code2type: {
+    0: TILE_TYPE.EMPTY,
+    1: TILE_TYPE.wall,
+    2: TILE_TYPE.box,
+    3: TILE_TYPE.playerspawn,
+    4: TILE_TYPE.powerup,
+    5: TILE_TYPE.player1spot,
+    6: TILE_TYPE.bomb,
+  },
+  type2code: {
+    [TILE_TYPE.EMPTY]: 0,
+    [TILE_TYPE.wall]: 1,
+    [TILE_TYPE.box]: 2,
+    [TILE_TYPE.playerspawn]: 3,
+    [TILE_TYPE.powerup]: 4,
+    [TILE_TYPE.player1spot]: 5,
+    [TILE_TYPE.bomb]: 6,
+  },
   // return the <div> for the given x,y coordinates (or null if off‑grid)
   getCell(x, y) {
     return container.querySelector(
@@ -61,6 +80,12 @@ const api = {
       cell.classList.remove(`tile-${t}`)
     );
     if (type) cell.classList.add(`tile-${type}`);
+
+    // keep numeric map (gridApi.map) in sync if present
+    if (api.map && api.map[y] && typeof api.map[y][x] !== 'undefined') {
+      const code = api.type2code && api.type2code[type];
+      if (typeof code !== 'undefined') api.map[y][x] = code;
+    }
   },
 
   // helpers built on getType
@@ -127,13 +152,14 @@ export function exportMap(gridApi) {
 }
 
 export function buildFromMap(gridApi, map) {
-  const code2type = {
+  const code2type = (gridApi && gridApi.code2type) || {
     0: TILE_TYPE.EMPTY,
     1: TILE_TYPE.wall,
     2: TILE_TYPE.box,
     3: TILE_TYPE.playerspawn,
     4: TILE_TYPE.powerup,
     5: TILE_TYPE.player1spot,
+    6: TILE_TYPE.bomb,
   };
   console.log('building from map:');
   for (let y = 0; y < map.length; y += 1) {

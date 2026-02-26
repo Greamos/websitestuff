@@ -1,5 +1,6 @@
 import { TILE_PROPS } from './grid.js';
 import { TILE_TYPE } from './grid.js';
+import { scheduleTask } from './game.js';
 
 export function bindArrowKeys(player, gridApi, options = {}) {
  
@@ -8,6 +9,7 @@ export function bindArrowKeys(player, gridApi, options = {}) {
   // options: { repeatOnHold: boolean, repeatInterval: ms }
   const repeatOnHold = !!options.repeatOnHold;
   const repeatInterval = options.repeatInterval || 180;
+  const activeBombs = options.activeBombs;
 
   let activeKey = null;
   let repeatTimer = null;
@@ -37,15 +39,15 @@ export function bindArrowKeys(player, gridApi, options = {}) {
     else if (direction === 'right') nx = Math.min(gridApi.cols - 1, player.x + 1);
     if (nx === ox && ny === oy) return;
     if (!isWalkable(nx, ny)) return;
+
+    // Capture original type at old position before moving
+    const oldType = gridApi.getType(ox, oy);
+    // Move the player sprite
     player.moveTo(gridApi, nx, ny);
 
-    if (gridApi.map)  {
-      gridApi.map[oy][ox] = 0;  // clear old cell in map data
-      gridApi.map[ny][nx] = 5;  // set new cell in map data to player1spot code (5)
-    }
-    gridApi.setType(ox, oy, TILE_TYPE.EMPTY);
-    gridApi.setType(nx, ny, TILE_TYPE.player1spot);
   }
+
+
 function isWalkable(x, y) {
     // 1. Safety check (same as before)
     if (y < 0 || y >= gridApi.map.length || x < 0 || x >= gridApi.map[y].length) {
@@ -61,13 +63,14 @@ function isWalkable(x, y) {
         3: TILE_TYPE.playerspawn,
         4: TILE_TYPE.powerup,
         5: TILE_TYPE.player1spot,
+        6: TILE_TYPE.bomb,
     };
     
     const stringType = code2type[rawCode];
 
     // 4. Look up that word in your TILE_PROPS
     const props = TILE_PROPS[stringType];
-
+    console.log(`Trying to move to (${x}, ${y}) - Type: ${stringType}`, props);
     if (props && props.walkable === true) {
         return true;
     }
@@ -111,11 +114,38 @@ function isWalkable(x, y) {
     }
   });
 
-  window.addEventListener('keydown', (e) => {
+ window.addEventListener('keydown', (e) => {
     if (e.code === 'Space') {
-      e.preventDefault();
-      console.log('spacebar pressed - you can trigger bomb planting here!');
-      player.placeBomb(gridApi);
+        e.preventDefault();
+
+        // 1. Try to place the bomb and catch the data
+        const bombData = player.placeBomb();
+
+        // 2. ONLY proceed if the bomb was successfully placed
+        if (bombData && activeBombs) {
+            console.log('Adding bomb to activeBombs list:', bombData);
+            
+            // Add to the solid objects list (so people can't walk through it)
+            activeBombs.push(bombData);
+
+            // 3. Schedule the explosion task
+            // This stays "packaged" here and runs in 3 seconds
+            scheduleTask(3000, () => {
+                console.log('Task Triggered: Clearing bomb at', bombData.x, bombData.y);
+                
+                // Clear visual on the grid
+                gridApi.setType(bombData.x, bombData.y, TILE_TYPE.EMPTY);
+
+                // Remove from the solid objects list
+                const index = activeBombs.indexOf(bombData);
+                if (index !== -1) {
+                    activeBombs.splice(index, 1);
+                }
+            });
+            
+        } else {
+            // This runs if player.placeBomb() returned null (e.g., standing on a wall)
+            console.log("No bomb placed. activeBombs exists?", !!activeBombs);
+        }
     }
-});
-}
+});}

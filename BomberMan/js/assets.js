@@ -13,11 +13,11 @@ export const assets = {
     // IMPORTANT: detected grid offset (source pixels). Inspector found a 1px left gutter and 27px top gutter.
     // These are used by the Player rendering code so background-position lines up with inspector grid.
     sheetOffsetX: 1,
-    sheetOffsetY: 27,
+    sheetOffsetY: 26,
     // renderScale (zoom multiplier) and small display nudges (pixels) — change these here for quick visual tweaks
     // - renderScale: 1 = use element size; 1.2 = 20% larger, 0.9 = 10% smaller
     // - renderOffsetX/Y: display-pixel nudge added after calculated offsets (useful to remove a 1px misalignment)
-    renderScale: 1.3,
+    renderScale: 1.4,
     renderOffsetX: 0,
     renderOffsetY: 3,
     // globalFrameTrim: trim (in source pixels) applied to every frame on each side (0 = off)

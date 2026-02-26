@@ -384,14 +384,15 @@ export class Player {
     if (this.img) this.img.style.setProperty('--move-duration', `${ms}ms`);
   }
 
-placeBomb(gridApi) {
-
-console.log('Bomb planted at1', this.x, this.y);
-this.gridApi.setType(this.x, this.y, TILE_TYPE.bomb);
-
-}
-
-}
+placeBomb() {
+  const x = this.x;
+  const y = this.y;
+  if (x == null || y == null) return;
+  
+  this.gridApi.setType(x, y, TILE_TYPE.bomb);
+  console.log('Bomb planted at', x, y);
+  return { x, y, fuse: 3000 };
+}}
 
 
 

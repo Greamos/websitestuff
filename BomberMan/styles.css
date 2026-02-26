@@ -102,3 +102,43 @@ button:hover {
 .grid-item[data-type="explosion"] { background: radial-gradient(circle, #ff0000 0%, #ff4500 70%, transparent 80%); border: none; }      
 .grid-item[data-type="playerspawn"] { background: #4caf50; border: 2px dashed #388e3c; }  
 .grid-item[data-type="player1spot"] { border: 2px dashed red; }
+
+
+
+.heartbeat-monitor {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  padding: 20px;
+  margin-right: 50px;
+  background: #222;
+  border-radius: 8px;
+  width: 60px;
+}
+
+.light {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background-color: #444; /* Off color */
+  transition: background 0.1s;
+}
+
+/* Light 1 active color */
+#light-1.active {
+  background-color: #ff0044;
+  box-shadow: 0 0 10px #ff0044;
+}
+
+/* Light 2 active color */
+#light-2.active {
+  background-color: #00ffcc;
+  box-shadow: 0 0 10px #00ffcc;
+}
+
+#ms-display {
+  color: white;
+  font-family: monospace;
+  font-size: 10px;
+}
