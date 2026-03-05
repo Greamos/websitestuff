@@ -28,19 +28,6 @@ export function scheduleTask(ms, callback) {
   });
 }
 
-// Lightweight API to read current player coordinates
-export function getPlayerCoords() {
-  const p = (typeof window !== 'undefined' && window.__game && window.__game.player) || null;
-  if (!p || p.x == null || p.y == null) return null;
-  return { x: p.x, y: p.y, id: p.id };
-}
-
-export function findBombAt(x, y) {
-    return ActiveBombArr.find(b => b.x === x && b.y === y);
-}
-
-
-
 document.addEventListener('DOMContentLoaded', async () => {
   const gridApi = createGrid(GRID_ID, 10, 10);
   const gameMap = level1.map(row => row.slice());
@@ -60,17 +47,13 @@ document.addEventListener('DOMContentLoaded', async () => {
       // gridApi.setType(spawn.x, spawn.y, TILE_TYPE.EMPTY);
   }
 
-//   bindArrowKeys(player, gridApi, { repeatOnHold: true, repeatInterval: 180, activeBombs : ActiveBombArr });
-  const updateMovement = bindArrowKeys(player, gridApi, { activeBombs: ActiveBombArr });
+  bindArrowKeys(player, gridApi, { repeatOnHold: true, repeatInterval: 180, activeBombs : ActiveBombArr });
 
 window.__game = { gridApi, player, assetsLoaded: loaded };
 
 // Start the tick
 startTick((deltaTime) => {
     // EVERYTHING that needs deltaTime must be inside these curly braces!
-
-    // 0. Update player movement based on input
-    updateMovement(); 
 
     // 1. Update the MS display
     const msElement = document.getElementById('ms-display');
@@ -102,7 +85,7 @@ startTick((deltaTime) => {
 
     for (let i = TaskQueue.length - 1; i >= 0; i--) { //task scheduler loop //
         const task = TaskQueue[i];
-        task.time -= deltaTime; // task scheduler is for things that need to happen in sequence, but not necessarily every tick. like bomb explosions and stuff. you can call it from anywhere in the code with scheduleTask(ms, callback)
+        task.time -= deltaTime;
 
         if (task.time <= 0) {
             task.onComplete();

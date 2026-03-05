@@ -117,6 +117,21 @@ const api = {
     const cell = api.getCell(x, y);
     if (!cell) return;
     cell.innerHTML = '';
+  },
+
+  
+  getPlayerCoords() {
+    const p = (typeof window !== 'undefined' && window.__game && window.__game.player) || null;
+    if (!p || p.x == null || p.y == null) return null;
+    return { x: p.x, y: p.y, id: p.id };
+  },
+
+  // Kill the current player instance (if available). Safe no-op if missing.
+  killPlayer() {
+    const p = (typeof window !== 'undefined' && window.__game && window.__game.player) || null;
+    if (p && typeof p.die === 'function' && !p.isDead) {
+      p.die();
+    }
   }
 };
 

@@ -33,3 +33,7 @@ if (OnTickCallback) {
 
 requestAnimationFrame(TickUpdate); // schedule the next tick
 }
+
+
+
+// requestAnimationFrame(TickUpdate);

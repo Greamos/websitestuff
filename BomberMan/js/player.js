@@ -384,6 +384,22 @@ export class Player {
     if (this.img) this.img.style.setProperty('--move-duration', `${ms}ms`);
   }
 
+  die() {
+    console.log("Player died!");
+        if (this.img) {
+        this.img.remove();
+        this.img = null;
+    }
+    
+    // 2. Add an 'isDead' flag so your Input file knows to stop moving the player
+    this.isDead = true;
+    
+    // 3. Optional: Add a death animation, or trigger a game-over UI
+  }
+
+
+
+
 placeBomb() {
   const x = this.x;
   const y = this.y;
@@ -393,6 +409,8 @@ placeBomb() {
   console.log('Bomb planted at', x, y);
   return { x, y, fuse: 3000 };
 }}
+
+
 
 
 

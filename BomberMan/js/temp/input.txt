@@ -1,7 +1,6 @@
 import { TILE_PROPS } from './grid.js';
 import { TILE_TYPE } from './grid.js';
 import { scheduleTask } from './game.js';
-import { triggerExplosion } from './GameItems/explosion.js';
 
 export function bindArrowKeys(player, gridApi, options = {}) {
  
@@ -21,7 +20,6 @@ export function bindArrowKeys(player, gridApi, options = {}) {
   }
 
   function attemptMove(direction) {
-    if (player.isDead) return;
     if (!direction) return;
     if (player.isMoving) return; // wait until current move finishes
 
@@ -78,8 +76,32 @@ function isWalkable(x, y) {
     return false;
 }
 
+  // window.addEventListener('keydown', (e) => {
+  //   const direction = getDirFromKey(e.key);
+  //   if (!direction) return;
+  //   e.preventDefault();
 
-  window.addEventListener('keydown', (e) => { // is for the movement keys, not the bomb key (space) which is handled in game.js
+  //   if (!repeatOnHold) {
+  //     attemptMove(direction);
+  //     return;
+  //   }
+
+  //   // repeat-on-hold behavior
+  //   if (activeKey && activeKey !== direction) {
+  //     // different key pressed while holding another
+  //     // clear previous
+  //     if (repeatTimer) { clearInterval(repeatTimer); repeatTimer = null; }
+  //     activeKey = null;
+  //   }
+
+  //   if (!activeKey) {
+  //     activeKey = direction;
+  //     attemptMove(direction);
+  //     repeatTimer = setInterval(() => attemptMove(direction), repeatInterval);
+  //   }
+  // });
+// -0-0-0-0-0-0-0-0-0-0-0-0-0--0-0 //
+  window.addEventListener('keydown', (e) => {
     const direction = getDirFromKey(e.key);
     if (!direction) return;
       heldDirections.add(direction); 
@@ -93,6 +115,16 @@ function isWalkable(x, y) {
     heldDirections.delete(direction); 
   });
 
+//-0-0-0-00-0-00 -00-0-0-0--0//
+
+  // window.addEventListener('keydown', (e) => {
+  //   const direction = getDirFromKey(e.key);
+  //     if (!direction) return;
+  //     if (activeKey === direction) {
+  //       activeKey = null;
+  //     if (repeatTimer) { clearInterval(repeatTimer); repeatTimer = null; }
+  //   }
+  // });
 
 
 function processMovement() {
@@ -109,41 +141,40 @@ function processMovement() {
         attemptMove('right');
     }
 }
-window.addEventListener('keydown', (e) => {
-      if (e.code === 'Space') {
-          e.preventDefault();
 
-          if (player.isDead) return;
+ window.addEventListener('keydown', (e) => {
+    if (e.code === 'Space') {
+        e.preventDefault();
 
-          // 1. Try to place the bomb and catch the data
-          const bombData = player.placeBomb();
+        // 1. Try to place the bomb and catch the data
+        const bombData = player.placeBomb();
 
-          // 2. ONLY proceed if the bomb was successfully placed
-          if (bombData && activeBombs) {
-              console.log('Adding bomb to activeBombs list:', bombData);
-              
-              activeBombs.push(bombData);
+        // 2. ONLY proceed if the bomb was successfully placed
+        if (bombData && activeBombs) {
+            console.log('Adding bomb to activeBombs list:', bombData);
+            
+            // Add to the solid objects list (so people can't walk through it)
+            activeBombs.push(bombData);
 
-              scheduleTask(3000, () => {
-                  // console.log('Task Triggered: Clearing bomb at', bombData.x, bombData.y);
-                  // gridApi.setType(bombData.x, bombData.y, TILE_TYPE.EMPTY);
+            // 3. Schedule the explosion task
+            // This stays "packaged" here and runs in 3 seconds
+            scheduleTask(3000, () => {
+                console.log('Task Triggered: Clearing bomb at', bombData.x, bombData.y);
+                
+                // Clear visual on the grid
+                gridApi.setType(bombData.x, bombData.y, TILE_TYPE.EMPTY);
 
-                  const index = activeBombs.indexOf(bombData);
-                  if (index !== -1) {
-                      activeBombs.splice(index, 1);
-                  }
-                  triggerExplosion(gridApi, bombData.x, bombData.y, 7);
-
-              });
-              
-          } else {
-              console.log("No bomb placed. activeBombs exists?", !!activeBombs);
-          }
-      }
-  });
-
-
-  
-  return processMovement; 
-
-}
+                // Remove from the solid objects list
+                const index = activeBombs.indexOf(bombData);
+                if (index !== -1) {
+                    activeBombs.splice(index, 1);
+                }
+            });
+            
+        } else {
+            // This runs if player.placeBomb() returned null (e.g., standing on a wall)
+            console.log("No bomb placed. activeBombs exists?", !!activeBombs);
+        }
+           
+        return processMovement;
+});
