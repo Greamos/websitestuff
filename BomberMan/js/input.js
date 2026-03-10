@@ -118,21 +118,20 @@ window.addEventListener('keydown', (e) => {
           // 1. Try to place the bomb and catch the data
           const bombData = player.placeBomb();
 
+
           // 2. ONLY proceed if the bomb was successfully placed
-          if (bombData && activeBombs) {
+          if (bombData) {
               console.log('Adding bomb to activeBombs list:', bombData);
-              
               activeBombs.push(bombData);
 
-              scheduleTask(3000, () => {
-                  // console.log('Task Triggered: Clearing bomb at', bombData.x, bombData.y);
-                  // gridApi.setType(bombData.x, bombData.y, TILE_TYPE.EMPTY);
+                bombData.task = scheduleTask(3000, () => {
 
                   const index = activeBombs.indexOf(bombData);
                   if (index !== -1) {
                       activeBombs.splice(index, 1);
                   }
-                  triggerExplosion(gridApi, bombData.x, bombData.y, 7);
+
+                  triggerExplosion(gridApi, bombData.x, bombData.y, 1);
 
               });
               

@@ -1,14 +1,16 @@
 import { TILE_TYPE, TILE_PROPS } from '../grid.js'; 
 import { findBombAt, scheduleTask } from '../game.js';
 
+
 export function triggerExplosion(gridApi, startX, startY, radius = 1) {
     const tilesOnFire = [];
     const playerPos = gridApi.getPlayerCoords();
     let playerHit = false; 
 
-    // 1. Add the center (The tile the bomb was actually on)
+    // 1. Add the center
     tilesOnFire.push({ x: startX, y: startY });
 
+    // 2. Define the directions array HERE (or keep it outside)
     const directions = [
         { dx: 0, dy: -1 }, { dx: 0, dy: 1 }, { dx: -1, dy: 0 }, { dx: 1, dy: 0 }
     ];
@@ -22,36 +24,33 @@ export function triggerExplosion(gridApi, startX, startY, radius = 1) {
             
             const tileType = gridApi.getType(checkX, checkY);
             
-            // A. Stop immediately if we hit a permanent wall
+            // 1. Absolute Blockers
             if (tileType === TILE_TYPE.wall) break; 
             
-            // B. If we hit a BOX: Add it to the fire list (to destroy it) and STOP
-            if (tileType === TILE_TYPE.box) {
+            // 2. Destructibles (Boxes & Bombs)
+            if (tileType === TILE_TYPE.box || tileType === TILE_TYPE.bomb) {
                 hitTiles.push({ x: checkX, y: checkY });
-                break; 
-            }
-
-            // C. THE FIX: If we hit another BOMB
-            if (tileType === TILE_TYPE.bomb) {
-                const bomb = findBombAt(checkX, checkY);
-                if (bomb && bomb.task) {
-                    // Set time to 0 to trigger explosion on the very next tick.
-                    // If you change this to 99999, the bomb will now correctly
-                    // wait because we are NOT adding it to 'hitTiles' below.
-                    bomb.task.time = 0; 
-                }
                 
-                // IMPORTANT: We do NOT push to hitTiles here. 
-                // We let the second bomb draw its own fire when its task triggers.
-                break; 
-            }
+                // If it's a bomb, trigger it!
+                
+if (tileType === TILE_TYPE.bomb) {
+    const bomb = findBombAt(checkX, checkY);
+    if (bomb && bomb.task) {
+        console.log("Found bomb, original task time was:", bomb.task.time);
+        bomb.task.time = 99999; return; // Trigger it!
+        console.log("New task time set to:", bomb.task.time);
+    } else {
+        console.log("Bomb found but NO TASK attached to it!");
+    }
+    break; 
+}}
             
-            // D. If it's a pass-through tile (Empty, Powerup, or already Fire)
+            // 3. Pass-through tiles
             if (tileType === TILE_TYPE.EMPTY || tileType === TILE_TYPE.powerup || tileType === TILE_TYPE.explosion) {
                 hitTiles.push({ x: checkX, y: checkY });
+                // We do NOT break here; fire continues to the next tile
             } else {
-                // Stop if we hit anything else (like a player spot)
-                break; 
+                break; // Stop on anything else
             }
         }
         return hitTiles;
@@ -60,21 +59,23 @@ export function triggerExplosion(gridApi, startX, startY, radius = 1) {
     // 4. Run the helper for each direction and add to main list
     for (const dir of directions) {
         const hits = CalcFireDirection(dir);
-        tilesOnFire.push(...hits); 
+        tilesOnFire.push(...hits); // The ... adds all items from hits into tilesOnFire
     }
 
     // --- Draw the Fire ---
     for (const tile of tilesOnFire) {
         gridApi.setType(tile.x, tile.y, TILE_TYPE.explosion);
     }
-
     // Check if player is in explosion
+    
     for (const tile of tilesOnFire) {
-        if (playerPos && tile.x === playerPos.x && tile.y === playerPos.y) {
-            console.log("Player is in the fire!");
-            playerHit = true; 
-        }
+    if (playerPos && tile.x === playerPos.x && tile.y === playerPos.y) {
+        console.log("Player is in the fire!");
+        playerHit = true; // mark for death on cleanup
     }
+}
+
+
 
     // --- Cleanup ---
     scheduleTask(500, () => {

@@ -11,13 +11,14 @@ import {
  
 } from './grid.js';
 import { startTick } from './tick.js';
+// import { triggerExplosion } from './GameItems/explosion.js';
 
 
 const GRID_ID = 'game-grid';
 
 let hbTimer = 0;
 let hbState = true;
-const ActiveBombArr = []; // Global array to track active bombs collision stuff
+export const ActiveBombArr = []; // Global array to track active bombs collision stuff
 const TaskQueue = []; // Global task queue for sequential actions
 
 
@@ -102,13 +103,30 @@ startTick((deltaTime) => {
 
     for (let i = TaskQueue.length - 1; i >= 0; i--) { //task scheduler loop //
         const task = TaskQueue[i];
+        
         task.time -= deltaTime; // task scheduler is for things that need to happen in sequence, but not necessarily every tick. like bomb explosions and stuff. you can call it from anywhere in the code with scheduleTask(ms, callback)
 
         if (task.time <= 0) {
+            console.log("Blowing up task at:", task.onComplete);
             task.onComplete();
             TaskQueue.splice(i, 1); // Remove the completed task
         }
     }
+
+    // // Update bomb fuses using deltaTime (ms)
+    // for (let i = ActiveBombArr.length - 1; i >= 0; i--) {
+    //     const bomb = ActiveBombArr[i];
+    //     // ensure fuse is a number
+    //     bomb.fuse = (typeof bomb.fuse === 'number') ? bomb.fuse : 0;
+    //     bomb.fuse -= deltaTime;
+    //     if (bomb.fuse <= 0) {
+    //         ActiveBombArr.splice(i, 1);
+    //         if (gridApi.isType(bomb.x, bomb.y, TILE_TYPE.bomb)) {
+    //             gridApi.setType(bomb.x, bomb.y, TILE_TYPE.EMPTY);
+    //         }
+    //         triggerExplosion(gridApi, bomb.x, bomb.y, 1);
+    //     }
+    // }
     
 });
 });
