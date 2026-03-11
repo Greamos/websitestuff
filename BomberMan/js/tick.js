@@ -1,6 +1,4 @@
 
-
-
 let LastTime = 0;
 let OnTickCallback = null;
 

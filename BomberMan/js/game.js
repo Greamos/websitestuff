@@ -51,10 +51,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   const loaded = await preloadAssets(assets);      // <‑‑ do this before you use `loaded`
   const spawn = findSpawn(level1);
-//   if (spawn) {
-//       player.moveTo(gridApi, spawn.x, spawn.y);
-//   }
-//   const player = new Player('p1', assets.player.idle, { loadedAssets: loaded }); // old way: new Player('p1', loaded.player.idle);
+
 
 console.log("B: Calling initMultiplayer...");
 
@@ -74,7 +71,7 @@ console.log("B: Calling initMultiplayer...");
 
 window.__game = { gridApi, player, assetsLoaded: loaded };
 
-    // Start the tick
+
 // Start the tick
     startTick((deltaTime) => {
         // 0. Update player movement
@@ -94,6 +91,8 @@ window.__game = { gridApi, player, assetsLoaded: loaded };
                 object.moveTo(gridApi, targetPos.x, targetPos.y);
             }
         }
+
+        
         
         // 3. Update the MS display
         const msElement = document.getElementById('ms-display');

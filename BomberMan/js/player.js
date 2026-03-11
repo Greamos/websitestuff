@@ -413,6 +413,7 @@ placeBomb() {
   if (x == null || y == null) return;
   
   this.gridApi.setType(x, y, TILE_TYPE.bomb);
+  myNetState.setState("bomb", { x, y }); 
   console.log('Bomb planted at', x, y);
   return { x, y, fuse: 3000 };
 }}
