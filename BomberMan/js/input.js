@@ -68,13 +68,13 @@ function isWalkable(x, y) {
 
     // 4. Look up that word in your TILE_PROPS
     const props = TILE_PROPS[stringType];
-    console.log(`Trying to move to (${x}, ${y}) - Type: ${stringType}`, props);
+    // console.log(`Trying to move to (${x}, ${y}) - Type: ${stringType}`, props);
     if (props && props.walkable === true) {
         return true;
     }
 
     // If we don't recognize it or it's not walkable
-    console.log("Blocked at:", x, y, "Type name:", stringType);
+    // console.log("Blocked at:", x, y, "Type name:", stringType);
     return false;
 }
 
@@ -114,7 +114,7 @@ window.addEventListener('keydown', (e) => {
           e.preventDefault();
 
           if (player.isDead) return;
-
+        
           // 1. Try to place the bomb and catch the data
           const bombData = player.placeBomb();
 
@@ -132,8 +132,10 @@ window.addEventListener('keydown', (e) => {
                   }
 
                   triggerExplosion(gridApi, bombData.x, bombData.y, 1);
+                  console.log(`Bomb at (${bombData.x}, ${bombData.y}) exploded. Removed from activeBombs.`);
 
               });
+              
               
           } else {
               console.log("No bomb placed. activeBombs exists?", !!activeBombs);

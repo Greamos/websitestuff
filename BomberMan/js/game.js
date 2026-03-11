@@ -11,7 +11,7 @@ import {
  
 } from './grid.js';
 import { startTick } from './tick.js';
-// import { triggerExplosion } from './GameItems/explosion.js';
+import { initMultiplayer, remotePlayers } from './multiplayer.js';
 
 
 const GRID_ID = 'game-grid';
@@ -23,10 +23,12 @@ const TaskQueue = []; // Global task queue for sequential actions
 
 
 export function scheduleTask(ms, callback) {
-  TaskQueue.push({
+  const newTask = {
     time: ms,
-    onComplete:callback
-  });
+    onComplete: callback
+  };
+  TaskQueue.push(newTask);
+  return newTask; 
 }
 
 // Lightweight API to read current player coordinates
@@ -40,26 +42,28 @@ export function findBombAt(x, y) {
     return ActiveBombArr.find(b => b.x === x && b.y === y);
 }
 
-
-
 document.addEventListener('DOMContentLoaded', async () => {
   const gridApi = createGrid(GRID_ID, 10, 10);
   const gameMap = level1.map(row => row.slice());
   gridApi.map = gameMap;  // Use Gamemap for updates over the map! 
   buildFromMap(gridApi, gameMap);
 
-  // const mapData = exportMap(gridApi);
-  console.log(gameMap);
-
   const loaded = await preloadAssets(assets);      // <‑‑ do this before you use `loaded`
-
-  const player = new Player('p1', assets.player.idle, { loadedAssets: loaded });
-
-  const spawn = findSpawn(level1);
+   const spawn = findSpawn(level1);
+//   if (spawn) {
+//       player.moveTo(gridApi, spawn.x, spawn.y);
+//   }
+//   const player = new Player('p1', assets.player.idle, { loadedAssets: loaded }); // old way: new Player('p1', loaded.player.idle);
+      const myNetState = await initMultiplayer(gridApi, { player: assets.player, loaded: loaded }, spawn);
+      console.log("I am connected as:", myNetState.id);
+        if (!myNetState) {
+    console.error("CRITICAL: Multiplayer failed to return a player object!");
+}
+       const player = new Player('p1', assets.player.idle, { loadedAssets: loaded });
   if (spawn) {
       player.moveTo(gridApi, spawn.x, spawn.y);
-      // gridApi.setType(spawn.x, spawn.y, TILE_TYPE.EMPTY);
   }
+ 
 
 //   bindArrowKeys(player, gridApi, { repeatOnHold: true, repeatInterval: 180, activeBombs : ActiveBombArr });
   const updateMovement = bindArrowKeys(player, gridApi, { activeBombs: ActiveBombArr });
@@ -73,15 +77,32 @@ startTick((deltaTime) => {
     // 0. Update player movement based on input
     updateMovement(); 
 
-    // 1. Update the MS display
+
+    if (myNetState && typeof myNetState.setState === 'function') {
+    myNetState.setState("pos", { x: player.x, y: player.y }); // multiplayer position sync
+        } else {
+
+
+    for (const id in remotePlayers) {
+        if (id === myNetState.id) continue; // Skip yourself
+
+        const { state, object } = remotePlayers[id];
+        const targetPos = state.getState("pos");
+        
+        if (targetPos) {
+            // Use your existing moveTo logic to move the "ghost" player
+            object.moveTo(gridApi, targetPos.x, targetPos.y);
+        }
+    }
+    
+
+    // 1. Update the MS display (stoplight)
     const msElement = document.getElementById('ms-display');
     if (msElement) {
         msElement.innerText = deltaTime.toFixed(2) + "ms";
     }
-
     // 2. Accumulate time for the light flip
     hbTimer += deltaTime;
-
     if (hbTimer > 500) { 
         hbTimer = 0;     
         hbState = !hbState; 
@@ -112,21 +133,6 @@ startTick((deltaTime) => {
             TaskQueue.splice(i, 1); // Remove the completed task
         }
     }
-
-    // // Update bomb fuses using deltaTime (ms)
-    // for (let i = ActiveBombArr.length - 1; i >= 0; i--) {
-    //     const bomb = ActiveBombArr[i];
-    //     // ensure fuse is a number
-    //     bomb.fuse = (typeof bomb.fuse === 'number') ? bomb.fuse : 0;
-    //     bomb.fuse -= deltaTime;
-    //     if (bomb.fuse <= 0) {
-    //         ActiveBombArr.splice(i, 1);
-    //         if (gridApi.isType(bomb.x, bomb.y, TILE_TYPE.bomb)) {
-    //             gridApi.setType(bomb.x, bomb.y, TILE_TYPE.EMPTY);
-    //         }
-    //         triggerExplosion(gridApi, bomb.x, bomb.y, 1);
-    //     }
-    // }
     
-});
+}});
 });

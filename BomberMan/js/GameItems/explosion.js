@@ -34,15 +34,15 @@ export function triggerExplosion(gridApi, startX, startY, radius = 1) {
             // C. THE FIX: If we hit another BOMB
             if (tileType === TILE_TYPE.bomb) {
                 const bomb = findBombAt(checkX, checkY);
+
+                        console.log("DEBUG 2: Fire hit a bomb tile. Found bomb object?", !!bomb, "Does it have a task?", bomb ? !!bomb.task : "N/A");
+
                 if (bomb && bomb.task) {
-                    // Set time to 0 to trigger explosion on the very next tick.
-                    // If you change this to 99999, the bomb will now correctly
-                    // wait because we are NOT adding it to 'hitTiles' below.
-                    bomb.task.time = 0; 
+                    // set timer for the bombs to explode if exploded by another bomb's fire.
+                    bomb.task.time = 250; 
+
+                            
                 }
-                
-                // IMPORTANT: We do NOT push to hitTiles here. 
-                // We let the second bomb draw its own fire when its task triggers.
                 break; 
             }
             

@@ -403,6 +403,13 @@ export class Player {
 placeBomb() {
   const x = this.x;
   const y = this.y;
+
+  const currentTileType = this.gridApi.getType(x, y);
+  if (currentTileType === TILE_TYPE.bomb) {
+      console.log("Already a bomb at this location!");
+      return null;
+  }
+
   if (x == null || y == null) return;
   
   this.gridApi.setType(x, y, TILE_TYPE.bomb);
