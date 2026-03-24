@@ -99,6 +99,7 @@ for (const id in remotePlayers) {
             object.moveTo(gridApi, targetPos.x, targetPos.y, true);
         }
     }
+}
 
 
     // 3. Update the MS display
