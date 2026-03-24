@@ -5,18 +5,14 @@ export const remotePlayers = {};
 
 export async function initMultiplayer(gridApi, assets, spawnPoint) {
     console.log("1. Starting initialization...");
-
-    // 1. Initialize the library
     await Playroom.Multiplayer(); 
     
-    // 2. THIS IS THE STEP YOU ARE MISSING!
-    // If the overlay doesn't appear, you MUST call this to join the room.
     console.log("2. Calling insertCoin()...");
     await Playroom.insertCoin(); 
 
     console.log("3. Joined! Now waiting for players...");
 
-  return new Promise((resolve) => {
+    return new Promise((resolve) => {
         const handlePlayerJoin = (state) => {
             console.log("4. Player joined/found:", state.id); 
             
@@ -26,14 +22,20 @@ export async function initMultiplayer(gridApi, assets, spawnPoint) {
             const me = Playroom.myPlayer();
             
             if (me && state.id === me.id) {
-                resolve(me); // This is you. You keep the normal 180ms speed.
+                resolve(me); // This is you
             } else {
-                // ---> ADD THIS LINE <---
-                // Make the remote "ghost" player animate faster!
-                p.setSpeed(100); 
-
+                // This is a GHOST
                 remotePlayers[state.id] = { state, object: p };
-            }
+
+                // Instant Listener! (Notice the closed brackets at the end)
+    state.onAfterStateChange(() => {
+        const targetPos = state.getState("pos");
+        if (targetPos) {
+            // This now runs the millisecond the packet arrives!
+            p.moveTo(gridApi, targetPos.x, targetPos.y, true);
+        }
+    });
+}
 
             state.onQuit(() => {
                 p.die();
