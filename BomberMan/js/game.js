@@ -81,28 +81,25 @@ startTick((deltaTime) => {
     updateMovement(); 
 
     // 1. UPLOAD (Only if we moved to a new tile)
-    if (myNetState && typeof myNetState.setState === 'function') {
-        if (player.x !== lastNetX || player.y !== lastNetY) {
-            // 'false' makes it fast WebRTC
-            myNetState.setState("pos", { x: player.x, y: player.y }, false); 
-            lastNetX = player.x;
-            lastNetY = player.y;
+    if (myNetState && (player.x !== lastNetX || player.y !== lastNetY)) {
+    myNetState.setState("pos", { x: player.x, y: player.y }, false);
+    lastNetX = player.x; lastNetY = player.y;
+}
+
+// 2. DOWNLOAD (Others movement to you)
+// This loop MUST be here because we removed the crashy code in multiplayer.js
+for (const id in remotePlayers) { 
+    const { state, object } = remotePlayers[id];
+    const targetPos = state.getState("pos");
+    
+    if (targetPos) {
+        // Only trigger if they actually changed tiles
+        if (object.x !== targetPos.x || object.y !== targetPos.y) {
+            // 'true' bypasses the animation lock
+            object.moveTo(gridApi, targetPos.x, targetPos.y, true);
         }
     }
 
-    // 2. DOWNLOAD (Sync other players)
-    for (const id in remotePlayers) { 
-        const { state, object } = remotePlayers[id];
-        const targetPos = state.getState("pos");
-        
-        if (targetPos) {
-            // Only trigger movement if their network position changed
-            if (object.x !== targetPos.x || object.y !== targetPos.y) {
-                // 'true' forces the move past the animation lock
-                object.moveTo(gridApi, targetPos.x, targetPos.y, true);
-            }
-        }
-    }
 
     // 3. Update the MS display
     const msElement = document.getElementById('ms-display');
