@@ -14,6 +14,7 @@ export class Player {
     this.isWalking = false;
     this.isMoving = false;
     this.moveDuration = options.moveDuration || 350; // movement animation duration
+    this.myNetState = options.myNetState || null; 
 
     // spritesheet support
     this.loadedAssets = options.loadedAssets || null; // map from preloadAssets()
@@ -406,7 +407,9 @@ placeBomb() {
   if (x == null || y == null) return;
   
   this.gridApi.setType(x, y, TILE_TYPE.bomb);
-  myNetState.setState("bomb", { x, y }); 
+      if (this.myNetState) {
+        this.myNetState.setState("bomb", { x: this.x, y: this.y });
+    }
   console.log('Bomb planted at', x, y);
   return { x, y, fuse: 3000 };
 }}

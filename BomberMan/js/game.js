@@ -63,7 +63,7 @@ console.log("B: Calling initMultiplayer...");
         if (!myNetState) {
     console.error("CRITICAL: Multiplayer failed to return a player object!");
 }
-       const player = new Player('p1', assets.player.idle, { loadedAssets: loaded });
+       const player = new Player('p1', assets.player.idle, { loadedAssets: loaded, myNetState: myNetState  });
   if (spawn) {
       player.moveTo(gridApi, spawn.x, spawn.y);
   }
@@ -72,7 +72,7 @@ console.log("B: Calling initMultiplayer...");
 //   bindArrowKeys(player, gridApi, { repeatOnHold: true, repeatInterval: 180, activeBombs : ActiveBombArr });
   const updateMovement = bindArrowKeys(player, gridApi, { activeBombs: ActiveBombArr });
 
-window.__game = { gridApi, player, assetsLoaded: loaded };
+window.__game = { gridApi, player, assetsLoaded: loaded, myNetState }; 
 
 
 // Start the tick
