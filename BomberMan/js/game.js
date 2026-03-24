@@ -79,7 +79,7 @@ window.__game = { gridApi, player, assetsLoaded: loaded };
 
         // 1. Sync position (Only if network is ready)
         if (myNetState && typeof myNetState.setState === 'function') {
-            myNetState.setState("pos", { x: player.x, y: player.y });
+            myNetState.setState("pos", { x: player.x, y: player.y }, false);
         }
 
         // 2. Sync remote players (ALWAYS run this)
