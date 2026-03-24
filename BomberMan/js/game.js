@@ -73,6 +73,10 @@ window.__game = { gridApi, player, assetsLoaded: loaded };
 
 
 // Start the tick
+
+let lastNetx = null;
+let lastNety = null;
+
     startTick((deltaTime) => {
         // 0. Update player movement
         updateMovement(); 
@@ -80,6 +84,9 @@ window.__game = { gridApi, player, assetsLoaded: loaded };
         // 1. Sync position (Only if network is ready)
         if (myNetState && typeof myNetState.setState === 'function') {
             myNetState.setState("pos", { x: player.x, y: player.y }, false);
+
+            lastNetX = player.x;
+            lastNetY = player.y;
         }
 
         // 2. Sync remote players (ALWAYS run this)
@@ -88,7 +95,11 @@ window.__game = { gridApi, player, assetsLoaded: loaded };
             const targetPos = state.getState("pos");
             
             if (targetPos) {
-                object.moveTo(gridApi, targetPos.x, targetPos.y);
+
+                if (object.x !== targetPos.x || object.y !== targetPos.y) { // Only move if there's a position change
+
+                object.moveTo(gridApi, targetPos.x, targetPos.y, true); // Force move to ensure sync
+                }
             }
         }
 

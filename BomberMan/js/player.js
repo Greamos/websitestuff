@@ -275,11 +275,13 @@ export class Player {
     this._setSpriteFrameByIndex(frames[0]);
   }
 
-  moveTo(gridApi, newX, newY) {
+  moveTo(gridApi, newX, newY, force = false) {
     // first placement case
     if (this.x === null || this.y === null) return this.place(gridApi, newX, newY);
 
-    if (this.isMoving) return; // avoid overlapping moves
+     if (!force && this.isMoving) return; 
+
+    // if (this.isMoving) return; // avoid overlapping moves
     this.isMoving = true;
 
     const dx = newX - this.x;

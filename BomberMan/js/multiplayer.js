@@ -16,7 +16,7 @@ export async function initMultiplayer(gridApi, assets, spawnPoint) {
 
     console.log("3. Joined! Now waiting for players...");
 
-    return new Promise((resolve) => {
+  return new Promise((resolve) => {
         const handlePlayerJoin = (state) => {
             console.log("4. Player joined/found:", state.id); 
             
@@ -26,8 +26,12 @@ export async function initMultiplayer(gridApi, assets, spawnPoint) {
             const me = Playroom.myPlayer();
             
             if (me && state.id === me.id) {
-                resolve(me);
+                resolve(me); // This is you. You keep the normal 180ms speed.
             } else {
+                // ---> ADD THIS LINE <---
+                // Make the remote "ghost" player animate faster!
+                p.setSpeed(100); 
+
                 remotePlayers[state.id] = { state, object: p };
             }
 
