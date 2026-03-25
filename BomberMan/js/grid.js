@@ -194,7 +194,16 @@ export function findSpawn(map) { // find spawn point in map and return coordinat
   return null;
 }
 
-
+export function findAllSpawns(map) { 
+  if (!map) return []; // Add this safety check!
+  const points = [];
+  for (let y = 0; y < map.length; y++) {
+    for (let x = 0; x < map[y].length; x++) {
+      if (map[y][x] === 3) points.push({ x, y });
+    }
+  }
+  return points;
+}
 
 export function setWall(gridApi) {
   gridApi.setType ? gridApi.setType(1, 0, TILE_TYPE.wall)

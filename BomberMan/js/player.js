@@ -388,6 +388,8 @@ moveTo(gridApi, newX, newY, force = false) {
     // 2. Add an 'isDead' flag so your Input file knows to stop moving the player
     this.isDead = true;
     
+    if (this.myNetState) {
+    this.myNetState.setState("isDead", true); } // send death state to other players
     // 3. Optional: Add a death animation, or trigger a game-over UI
   }
 
@@ -408,7 +410,11 @@ placeBomb() {
   
   this.gridApi.setType(x, y, TILE_TYPE.bomb);
       if (this.myNetState) {
-        this.myNetState.setState("bomb", { x: this.x, y: this.y });
+        this.myNetState.setState("bomb", {
+           x: this.x, 
+           y: this.y, 
+           id: Date.now(), // unique ID for this bomb 
+          }); // this is the line that sends the bomb placement to other players
     }
   console.log('Bomb planted at', x, y);
   return { x, y, fuse: 3000 };

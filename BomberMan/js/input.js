@@ -124,12 +124,16 @@ window.addEventListener('keydown', (e) => {
               console.log('Adding bomb to activeBombs list:', bombData);
               activeBombs.push(bombData);
 
-                bombData.task = scheduleTask(3000, () => {
+                bombData.task = scheduleTask(3000, () => { // bomb stuff
 
                   const index = activeBombs.indexOf(bombData);
                   if (index !== -1) {
                       activeBombs.splice(index, 1);
                   }
+
+                  if (player.myNetState) {
+                    player.myNetState.setState("bomb", null);
+                }   
 
                   triggerExplosion(gridApi, bombData.x, bombData.y, 1);
                   console.log(`Bomb at (${bombData.x}, ${bombData.y}) exploded. Removed from activeBombs.`);

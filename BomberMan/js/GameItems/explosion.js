@@ -1,5 +1,7 @@
 import { TILE_TYPE, TILE_PROPS } from '../grid.js'; 
 import { findBombAt, scheduleTask } from '../game.js';
+import { setState, isHost } from "https://esm.sh/playroomkit";
+
 
 export function triggerExplosion(gridApi, startX, startY, radius = 1) {
     const tilesOnFire = [];
@@ -77,13 +79,26 @@ export function triggerExplosion(gridApi, startX, startY, radius = 1) {
     }
 
     // --- Cleanup ---
-    scheduleTask(500, () => {
+     scheduleTask(500, () => {
+        // 1. Declare the variable correctly (lowercase)
+        let mapChanged = false;
+
         for (const tile of tilesOnFire) {
-            // Only set back to empty if it is currently still fire
             if (gridApi.isType(tile.x, tile.y, TILE_TYPE.explosion)) {
                 gridApi.setType(tile.x, tile.y, TILE_TYPE.EMPTY);
+                // 2. We set it to true so we know something changed
+                mapChanged = true; 
             }
         }
+
+        // 3. MOVE THIS OUTSIDE THE LOOP (The Sync Logic)
+        // We only tell the network ONCE after all tiles are cleared
+        if (mapChanged && isHost()) {
+            console.log("Map updated! Saving to Playroom state...");
+            setState("map", gridApi.map, true);
+        }
+
+        // 4. Handle player death
         if (playerHit && typeof gridApi.killPlayer === 'function') {
             gridApi.killPlayer();
         }
