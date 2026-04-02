@@ -15,7 +15,7 @@ export class Player {
     this.isMoving = false;
     this.moveDuration = options.moveDuration || 350; // movement animation duration
     this.myNetState = options.myNetState || null; 
-
+    this.hue = options.hue || 0; // coloring of the character (can be used to differentiate players)
     // spritesheet support
     this.loadedAssets = options.loadedAssets || null; // map from preloadAssets()
     // only enable spritesheet mode if a spritesheet path exists AND the image was preloaded successfully
@@ -61,6 +61,8 @@ export class Player {
       this.img.style.setProperty('--move-duration', `${this.moveDuration}ms`);
       if (this.useSpritesheet && !this._spriteMeta) this._initSpriteMetadata();
     }
+    
+    this.img.style.filter = `hue-rotate(${this.hue}deg)`;
 
     // position it at the center of the target cell
     const cell = gridApi.getCell(x, y);
@@ -70,6 +72,10 @@ export class Player {
     const top = cellRect.top - gridRect.top + cellRect.height / 2;
     this.img.style.left = `${left}px`;
     this.img.style.top = `${top}px`;
+
+
+
+
   }
 
   _initSpriteMetadata() {

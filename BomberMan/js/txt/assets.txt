@@ -118,24 +118,50 @@ export const assets = {
     }
   },
   explosion: {
-    spritesheet: 'assets/newFire.png', // Update to your new filename
+    // Spritesheet configuration for explosion animation
+    spritesheet: 'assets/BomberManEffect.png',
     frameWidth: 48,
     frameHeight: 48,
     sheetOffsetX: 0,
     sheetOffsetY: 0,
-    renderScale: 1.0,
+    // Rendering settings
+    renderScale: 1.0,   // 1:1 ratio
+    renderOffsetX: 0,
+    renderOffsetY: 0,
+    // For outer fires (row 2), slight offset to align with center
+    outerOffsetX: 0,   // Adjust if outer fires need horizontal shift
+    outerOffsetY: 0,   // Adjust if outer fires need vertical shift
+    globalFrameTrim: 0,
+    forceGlobalFrameTrim: false,
     fps: 12,
+    // Animation rows: center (row 0), directional (rows 1-2)
+    // Each row has 7 frames (left = newest, right = oldest)
     animations: {
-      "center":      { "default": { "row": 0, "start": 0, "count": 7 } },
-      "middle":      { "default": { "row": 1, "start": 0, "count": 7 } }, // Straight beams
-      "directional": { "default": { "row": 2, "start": 0, "count": 7 } }, // Tips
-      "ending":      { "default": { "row": 2, "start": 0, "count": 7 } }
+      // Center explosion (no rotation)
+      "center": {
+        "default": { "row": 0, "start": 0, "count": 7 }
+      },
+      // Directional flames - OUTER (row 2, index 2)
+      "directional": {
+        "default": { "row": 2, "start": 0, "count": 7 }  // Use row 2 (index 2) for outer fires
+      },
+      // Middle flames (row 1) - for extended ranges
+      "middle": {
+        "default": { "row": 1, "start": 0, "count": 7 }
+      },
+      // Ending/fade (row 2) - same as directional
+      "ending": {
+        "default": { "row": 2, "start": 0, "count": 7 }
+      }
     }
+  }
+
 }
-};
 
 
-
+// Preload helper: collects all string paths from the asset object,
+// loads them as Image objects and returns a Promise that resolves
+// to a lookup map { path: Image }
 export function preloadAssets(assetObj) {
   const paths = new Set();
 

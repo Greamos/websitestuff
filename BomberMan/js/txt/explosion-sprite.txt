@@ -1,0 +1,216 @@
+import { assets } from '../assets.js';
+
+export class ExplosionSprite {
+  constructor(x, y, direction = null, stage = 'center', options = {}) {
+    this.x = x;
+    this.y = y;
+    this.direction = direction;  // null for center, 'up'/'down'/'left'/'right' for directional
+    this.stage = stage;  // 'center', 'directional', 'ending'
+    this.el = null;
+    this.loadedAssets = options.loadedAssets || null;
+    this.gridApi = options.gridApi || null;
+    
+    this.useSpritesheet = !!(
+      assets && 
+      assets.explosion && 
+      assets.explosion.spritesheet && 
+      this.loadedAssets && 
+      this.loadedAssets[assets.explosion.spritesheet]
+    );
+    
+    this._spriteMeta = null;
+    this._animIndex = 0;
+  }
+
+  render(gridApi) {
+    this.gridApi = gridApi;
+
+    if (!this.el && this.useSpritesheet) {
+      const div = document.createElement('div');
+      div.className = 'explosion-sprite';
+      div.style.position = 'absolute';
+      div.style.width = '5rem';  // Match grid cell size
+      div.style.height = '5rem';
+      div.style.backgroundImage = `url(${assets.explosion.spritesheet})`;
+      div.style.backgroundRepeat = 'no-repeat';
+      div.style.backgroundColor = 'transparent';
+      div.style.backgroundAttachment = 'scroll';
+      div.style.imageRendering = 'pixelated';
+      div.style.zIndex = '3';
+      div.style.pointerEvents = 'none';
+      this.el = div;
+      gridApi.container.appendChild(this.el);
+      
+      this._initSpriteMetadata();
+      this._startAnimation();
+    }
+
+    // Position at grid cell center
+    const cell = gridApi.getCell(this.x, this.y);
+    if (cell) {
+      const gridRect = gridApi.container.getBoundingClientRect();
+      const cellRect = cell.getBoundingClientRect();
+      let left = cellRect.left - gridRect.left + cellRect.width / 2;
+      let top = cellRect.top - gridRect.top + cellRect.height / 2;
+      
+      // Apply direction-specific offsets for outer fires to align with center
+      if ((this.stage === 'directional' || this.stage === 'ending') && this.direction !== 'center') {
+        const baseOffsetX = (assets.explosion && assets.explosion.outerOffsetX) || 0;
+        const baseOffsetY = (assets.explosion && assets.explosion.outerOffsetY) || 0;
+        
+        // Direction-specific adjustments (in pixels)
+        const directionOffsets = {
+          'up': { x: 3, y: 0 },
+          'down': { x: 0, y: 0 },
+          'left': { x: 0, y: 0 },
+          'right': { x: 0, y: 3 }
+        };
+        
+        const dirOffset = directionOffsets[this.direction] || { x: 0, y: 0 };
+        left += baseOffsetX + dirOffset.x;
+        top += baseOffsetY + dirOffset.y;
+      }
+      
+      this.el.style.left = `${left}px`;
+      this.el.style.top = `${top}px`;
+      
+      // Apply rotation based on direction
+      if (this.direction && this.direction !== 'center') {
+        const rotations = {
+          'up': 270,
+          'right': 0,
+          'down': 90,
+          'left': 180
+        };
+        const rotation = rotations[this.direction] || 0;
+        this.el.style.transform = `translate(-50%, -50%) rotate(${rotation}deg)`;
+      } else {
+        this.el.style.transform = 'translate(-50%, -50%)';
+      }
+    }
+  }
+
+  _initSpriteMetadata() {
+    try {
+      const sheetPath = assets.explosion.spritesheet;
+      const sheetImg = this.loadedAssets && this.loadedAssets[sheetPath];
+      const frameW = assets.explosion.frameWidth || 48;
+      const frameH = assets.explosion.frameHeight || 48;
+
+      if (!sheetImg || !sheetImg.width || !sheetImg.height) {
+        console.warn('Explosion spritesheet not preloaded');
+        this.useSpritesheet = false;
+        return;
+      }
+
+      const sheetW = sheetImg.width;  // 336px
+      const sheetH = sheetImg.height; // 134px
+      const cols = Math.floor(sheetW / frameW);  // 7 columns
+      const rows = Math.floor(sheetH / frameH);  // 2 rows (with partial 3rd)
+
+      // Get actual element display size
+      const rect = this.el.getBoundingClientRect();
+      const dispW = Math.round(rect.width) || Math.round(3.2 * 16);  // ~51px
+      const dispH = Math.round(rect.height) || Math.round(3.2 * 16);
+
+      const scaleX = dispW / frameW;
+      const scaleY = dispH / frameH;
+
+      this._spriteMeta = {
+        cols, rows, frameW, frameH, dispW, dispH,
+        scaleX, scaleY, sheetW, sheetH
+      };
+
+      // Scale the ENTIRE sheet, not just cols×rows
+      const scaledSheetW = Math.round(sheetW * scaleX);
+      const scaledSheetH = Math.round(sheetH * scaleY);
+      this.el.style.backgroundSize = `${scaledSheetW}px ${scaledSheetH}px`;
+      
+      console.log('Explosion metadata:', { dispW, dispH, scaleX, scaleY, scaledSheetW, scaledSheetH });
+    } catch (err) {
+      console.warn('Failed to init explosion sprite metadata', err);
+      this._spriteMeta = null;
+    }
+  }
+
+  _setSpriteFrameByIndex(index) {
+    if (!this._spriteMeta) return;
+    const meta = this._spriteMeta;
+    const { cols, dispW, dispH, scaleX, scaleY } = meta;
+    
+    // Determine which row based on stage
+    const rowMap = { 'center': 0, 'directional': 1, 'ending': 2 };
+    const row = rowMap[this.stage] || 0;
+    
+    // Column is the frame index (0-6)
+    const col = index % cols;
+
+    const srcPixelX = col * meta.frameW;
+    const srcPixelY = row * meta.frameH;
+    const x = Math.round(srcPixelX * scaleX);
+    const y = Math.round(srcPixelY * scaleY);
+    
+    this.el.style.backgroundPosition = `-${x}px -${y}px`;
+  }
+
+  _startAnimation() {
+    // Get animation data
+    const animDef = assets.explosion && assets.explosion.animations && assets.explosion.animations[this.stage];
+    if (!animDef) return;
+
+    const frameDef = animDef.default;
+    if (!frameDef) return;
+
+    let frames = this._framesFromDef(frameDef);
+    
+    // For 'ending' stage, reverse the frames so it continues fading smoothly (and don't loop)
+    const isEnding = this.stage === 'ending';
+    if (isEnding) {
+      frames = frames.reverse();
+    }
+    
+    const fps = (assets.explosion && assets.explosion.fps) || 12;
+    const interval = Math.max(1, Math.round(1000 / fps));
+
+    this._animIndex = 0;
+    this._setSpriteFrameByIndex(frames[this._animIndex]);
+
+    this._animTimer = setInterval(() => {
+      this._animIndex++;
+      
+      // For ending animation, stop after playing through once
+      if (isEnding && this._animIndex >= frames.length) {
+        clearInterval(this._animTimer);
+        return;
+      }
+      
+      // Loop for directional/center
+      if (!isEnding) {
+        this._animIndex = this._animIndex % frames.length;
+      }
+      
+      this._setSpriteFrameByIndex(frames[this._animIndex]);
+    }, interval);
+  }
+
+  _framesFromDef(def) {
+    if (!def) return [0];
+    if (Array.isArray(def)) return def;
+    if (def && typeof def === 'object' && def.row != null && def.start != null && def.count != null) {
+      const cols = this._spriteMeta && this._spriteMeta.cols;
+      if (!cols) return [];
+      const out = [];
+      for (let i = 0; i < def.count; i++) out.push(def.row * cols + def.start + i);
+      return out;
+    }
+    return [0];
+  }
+
+  destroy() {
+    if (this._animTimer) clearInterval(this._animTimer);
+    if (this.el && this.el.parentNode) {
+      this.el.parentNode.removeChild(this.el);
+    }
+    this.el = null;
+  }
+}

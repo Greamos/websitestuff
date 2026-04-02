@@ -95,11 +95,35 @@ button:hover {
     image-rendering: pixelated;    /* preserves pixel-art when scaled */
 }
 
+/* Floating bomb sprite placed absolutely inside #game-grid */
+.bomb-sprite {
+    position: absolute;
+    width: 3.6rem;
+    height: 3.6rem;
+    background: none;
+    background-repeat: no-repeat;
+    image-rendering: pixelated;
+    pointer-events: none;
+    z-index: 5;
+}
+
+/* Floating explosion sprite placed absolutely inside #game-grid */
+.explosion-sprite {
+    position: absolute;
+    width: 5rem;
+    height: 5rem;
+    background-color: transparent;
+    background-repeat: no-repeat;
+    image-rendering: pixelated;
+    pointer-events: none;
+    z-index: 3;
+}
+
 
 .grid-item[data-type="wall"] { background: #333; border: 2px solid #222; }
 .grid-item[data-type="box"] { background: #a0522d; border: 2px solid #8b4513; }
-.grid-item[data-type="bomb"] { background: #27b422; border: 2px solid #555; }
-.grid-item[data-type="explosion"] { background: radial-gradient(circle, #ff0000 0%, #ff4500 70%, transparent 80%); border: none; }      
+.grid-item[data-type="bomb"] { background: #ffffff !important; border: none; }
+.grid-item[data-type="explosion"] { background: #ffffff !important; border: none; }      
 .grid-item[data-type="playerspawn"] { background: #4caf50; border: 2px dashed #388e3c; }  
 .grid-item[data-type="player1spot"] { border: 2px dashed red; }
 

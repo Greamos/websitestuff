@@ -1,14 +1,15 @@
 import { TILE_PROPS } from './grid.js';
 import { TILE_TYPE } from './grid.js';
-import { scheduleTask } from './game.js';
+import { scheduleTask, createBombSprite, destroyBombSprite } from './game.js';
 import { triggerExplosion } from './GameItems/explosion.js';
 
 export function bindArrowKeys(player, gridApi, options = {}) {
  
-  // options: { repeatOnHold: boolean, repeatInterval: ms }
+  // options: { repeatOnHold: boolean, repeatInterval: ms, activeBombs: array, loadedAssets: object }
   const repeatOnHold = !!options.repeatOnHold;
   const repeatInterval = options.repeatInterval || 180;
   const activeBombs = options.activeBombs;
+  const loadedAssets = options.loadedAssets;
   const heldDirections = new Set();
 
   function getDirFromKey(rawKey) {
@@ -123,6 +124,9 @@ window.addEventListener('keydown', (e) => {
           if (bombData) {
               console.log('Adding bomb to activeBombs list:', bombData);
               activeBombs.push(bombData);
+              
+              // Create bomb sprite
+              createBombSprite(bombData.x, bombData.y, gridApi, loadedAssets);
 
                 bombData.task = scheduleTask(3000, () => { // bomb stuff
 
@@ -130,12 +134,15 @@ window.addEventListener('keydown', (e) => {
                   if (index !== -1) {
                       activeBombs.splice(index, 1);
                   }
+                  
+                  // Destroy bomb sprite
+                  destroyBombSprite(bombData.x, bombData.y);
 
                   if (player.myNetState) {
                     player.myNetState.setState("bomb", null);
                 }   
 
-                  triggerExplosion(gridApi, bombData.x, bombData.y, 1);
+                  triggerExplosion(gridApi, bombData.x, bombData.y, 5, loadedAssets);
                   console.log(`Bomb at (${bombData.x}, ${bombData.y}) exploded. Removed from activeBombs.`);
 
               });
