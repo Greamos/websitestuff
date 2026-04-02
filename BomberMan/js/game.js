@@ -94,51 +94,57 @@ document.addEventListener('DOMContentLoaded', async () => {
             lastNetX = player.x; lastNetY = player.y;
         }
 
-        // 2. DOWNLOAD (Sync other players)
-        for (const id in remotePlayers) {
-            const { state, object } = remotePlayers[id];
+// 2. DOWNLOAD (Sync other players)
+for (const id in remotePlayers) {
+    const { state, object } = remotePlayers[id];
+    
+    // A. Sync Death
+    const isRemoteDead = state.getState("isDead");
+    if (isRemoteDead) {
+        if (!object.isDead) object.die();
+        continue; 
+    }
+
+    // B. Sync Movement
+    const targetPos = state.getState("pos");
+    if (targetPos && (object.x !== targetPos.x || object.y !== targetPos.y)) {
+        object.moveTo(gridApi, targetPos.x, targetPos.y, true);
+    }
+
+    // C. Sync Bombs
+    const remoteBomb = state.getState("bomb");
+    if (remoteBomb) {
+        // This will only print if you use an INCOGNITO window for the second player!
+        console.log(`Network Data Found for Player ${id}:`, remoteBomb.id);
+
+        if (remoteBomb.id !== lastBombIds[id]) {
+            console.log("!!! NEW REMOTE BOMB DETECTED !!!");
+            lastBombIds[id] = remoteBomb.id;
             
-            // A. Check for Death
-            const isRemoteDead = state.getState("isDead");
-            if (isRemoteDead) {
-                if (!object.isDead) object.die();
-                continue; 
-            }
+            gridApi.setType(remoteBomb.x, remoteBomb.y, TILE_TYPE.bomb);
+            ActiveBombArr.push({x: remoteBomb.x, y: remoteBomb.y});
 
-            // B. Sync Movement
-            const targetPos = state.getState("pos");
-            if (targetPos && (object.x !== targetPos.x || object.y !== targetPos.y)) {
-                object.moveTo(gridApi, targetPos.x, targetPos.y, true);
-            }
-
-            // C. Sync Bombs
-            const remoteBomb = state.getState("bomb");
-            if (remoteBomb && remoteBomb.id !== lastBombIds[id]) {
-                lastBombIds[id] = remoteBomb.id;
-                
-                gridApi.setType(remoteBomb.x, remoteBomb.y, TILE_TYPE.bomb);
-                ActiveBombArr.push({x: remoteBomb.x, y: remoteBomb.y});
-
-                scheduleTask(3000, () => {
-                    triggerExplosion(gridApi, remoteBomb.x, remoteBomb.y, 1);
-                    const index = ActiveBombArr.findIndex(b => b.x === remoteBomb.x && b.y === remoteBomb.y);
-                    if (index !== -1) ActiveBombArr.splice(index, 1);
-                });
-            }
+            scheduleTask(3000, () => {
+                triggerExplosion(gridApi, remoteBomb.x, remoteBomb.y, 1);
+                const index = ActiveBombArr.findIndex(b => b.x === remoteBomb.x && b.y === remoteBomb.y);
+                if (index !== -1) ActiveBombArr.splice(index, 1);
+            });
         }
+    }
+}
 
-        // 3. MAP PERSISTENCE SYNC (Check the "Table" every 1 second)
-        mapSyncTimer += deltaTime;
-        if (mapSyncTimer > 1000) {
-            mapSyncTimer = 0;
-            const latestMap = getState("map");
-            // If the Host updated the map, redraw it
-            if (latestMap && JSON.stringify(latestMap) !== JSON.stringify(gridApi.map)) {
-                console.log("Map sync: Redrawing grid from network state");
-                gridApi.map = latestMap;
-                buildFromMap(gridApi, latestMap);
-            }
-        }
+        // // 3. MAP PERSISTENCE SYNC (Check the "Table" every 1 second)
+        // mapSyncTimer += deltaTime;
+        // if (mapSyncTimer > 1000) {
+        //     mapSyncTimer = 0;
+        //     const latestMap = getState("map");
+        //     // If the Host updated the map, redraw it
+        //     if (latestMap && JSON.stringify(latestMap) !== JSON.stringify(gridApi.map)) {
+        //         console.log("Map sync: Redrawing grid from network state");
+        //         gridApi.map = latestMap;
+        //         buildFromMap(gridApi, latestMap);
+        //     }
+        // }
 
         // 4. Update the MS display
         const msElement = document.getElementById('ms-display');

@@ -93,7 +93,7 @@ export function triggerExplosion(gridApi, startX, startY, radius = 1) {
 
         // 3. MOVE THIS OUTSIDE THE LOOP (The Sync Logic)
         // We only tell the network ONCE after all tiles are cleared
-        if (mapChanged && isHost()) {
+        if (mapChanged ) {
             console.log("Map updated! Saving to Playroom state...");
             setState("map", gridApi.map, true);
         }

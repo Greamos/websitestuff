@@ -27,7 +27,7 @@ export async function initMultiplayer(gridApi, assets) {
                 : {x: 1, y: 1}; // Fallback if map fails
 
             // 4. Create Player
-            const p = new Player(state.id, assets.player.idle, { loadedAssets: assets.loaded });
+            const p = new Player(state.id, assets.player.idle, { loadedAssets: assets.loaded , myNetState: state});
             p.place(gridApi, spawnPoint.x, spawnPoint.y);
 
             // 5. Identify Local Player
