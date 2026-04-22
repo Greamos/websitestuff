@@ -3,8 +3,11 @@ import { findBombAt, scheduleTask } from '../game.js';
 import { ExplosionSprite } from './explosion-sprite.js';
 import { setState } from "https://esm.sh/playroomkit";
 
+
+export const RememberSpotMap = new Map();
 export function triggerExplosion(gridApi, startX, startY, radius = 1, loadedAssets = null) {
     const tilesOnFire = [];
+
     const playerPos = gridApi.getPlayerCoords();
     let playerHit = false; 
 
@@ -17,10 +20,13 @@ export function triggerExplosion(gridApi, startX, startY, radius = 1, loadedAsse
 
     // Helper to calculate fire for one direction
     function CalcFireDirection(dir) {
+        
         const hitTiles = [];
+    
         for (let i = 1; i <= radius; i++) {
             const checkX = startX + (i * dir.dx);
             const checkY = startY + (i * dir.dy);
+
             const tileType = gridApi.getType(checkX, checkY);
 
             if (tileType === TILE_TYPE.wall) break;
@@ -29,21 +35,43 @@ export function triggerExplosion(gridApi, startX, startY, radius = 1, loadedAsse
             const isTip = (i === radius) || (nextTile === TILE_TYPE.wall) || (nextTile === undefined);
 
             if (tileType === TILE_TYPE.box) {
-                hitTiles.push({ x: checkX, y: checkY, stage: 'directional', dirName: dir.name }); 
-                break; 
-            }
+    // 1. Add it to the fire list so the sprite appears!
+    hitTiles.push({ x: checkX, y: checkY, stage: 'directional', dirName: dir.name }); 
 
+    // 2. Set the tile to explosion visually
+    gridApi.setType(checkX, checkY, TILE_TYPE.explosion);
+
+    // 3. Put the FUTURE type into the RememberSpotMap
+    // When the explosion cleanup runs, it will see this and set it to playerspawn
+    RememberSpotMap.set(`${checkX},${checkY}`, TILE_TYPE.playerspawn);
+
+    console.log("Box hit! Fire started. Scheduled to become spawn point.");
+
+    // 4. Stop the beam from going FURTHER (but the box itself is now fire)
+    break; 
+}
             if (tileType === TILE_TYPE.bomb) {
                 const bomb = findBombAt(checkX, checkY);
                 if (bomb && bomb.task) bomb.task.time = 250;
                 break; 
             }
+            
+            if (tileType === TILE_TYPE.playerspawn || tileType === TILE_TYPE.player1spot) { //HIER POWER UP STUFF TOEVOEGEENNNN!!//
+
+                console.log("this is data", gridApi.getType(checkX, checkY));
+
+                RememberSpotMap.set(`${checkX},${checkY}`, gridApi.getType(checkX, checkY)); // store original type before explosion
+                console.log("remember spot", RememberSpotMap);
+                hitTiles.push({ x: checkX, y: checkY, stage: 'directional', dirName: dir.name });
+                break; 
+            }
+            
 
             if (tileType === TILE_TYPE.EMPTY || tileType === TILE_TYPE.powerup || tileType === TILE_TYPE.explosion) {
                 hitTiles.push({ x: checkX, y: checkY, stage: isTip ? 'directional' : 'middle', dirName: dir.name });
                 if (nextTile === TILE_TYPE.box) continue;
             } else {
-                break;
+
             }
         }
         return hitTiles;
@@ -98,16 +126,27 @@ export function triggerExplosion(gridApi, startX, startY, radius = 1, loadedAsse
     }
 
     // Cleanup
-    scheduleTask(1100, () => {
+    scheduleTask(1100, () => {      // bug! player spawn gets cleaned.. is that here? //
         for (const sprite of explosionSprites) sprite.destroy();
         let mapChanged = false;
         for (const tile of allTiles) {
-            if (gridApi.isType(tile.x, tile.y, TILE_TYPE.explosion)) {
-                gridApi.setType(tile.x, tile.y, TILE_TYPE.EMPTY);
-                mapChanged = true; 
-            }
+           if (gridApi.isType(tile.x, tile.y, TILE_TYPE.explosion)) {
+    const coordKey = `${tile.x},${tile.y}`;
+    
+    // Check if THIS specific coordinate was a spawn point
+    if (RememberSpotMap.has(coordKey)) {
+        const originalType = RememberSpotMap.get(coordKey);
+        gridApi.setType(tile.x, tile.y, originalType);
+        RememberSpotMap.delete(coordKey); // Clear it after restoring
+        console.log("Restored special tile:", originalType);
+    } else {
+        // Otherwise, it was just a normal floor/box, set to empty
+        gridApi.setType(tile.x, tile.y, TILE_TYPE.EMPTY);
+    }
+    mapChanged = true;
+}
         }
-        if (mapChanged) setState("map", gridApi.map, true);
-        if (playerHit && typeof gridApi.killPlayer === 'function') gridApi.killPlayer();
+        if (mapChanged) setState("map", gridApi.map, true); // this updates map for everyone, which is important if boxes were destroyed
+        if (playerHit && typeof gridApi.killPlayer === 'function') gridApi.killPlayer(); // kils player if they were hit
     });
 }

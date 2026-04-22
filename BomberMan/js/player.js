@@ -1,11 +1,12 @@
 import { assets } from './assets.js';
-import { TILE_TYPE } from './grid.js';
+import { TILE_TYPE} from './grid.js';
+import { RememberSpotMap } from './GameItems/explosion.js';
 
 export class Player {
   // options: { moveDuration: number (ms), loadedAssets: { [path]: Image } }
   constructor(id, spriteUrl, options = {}) {
     this.id = id;
-    this.bombRadius = 3;
+    this.bombRadius = 1;
     this.spriteUrl = spriteUrl;
     this.x = null;
     this.y = null;
@@ -409,17 +410,30 @@ this.img.style.top = `${top + visualNudgeY}px`;
 
 
 placeBomb() {
+
+  console.log("Attempting to place bomb at", this.x, this.y);
   const x = this.x;
   const y = this.y;
-  const radius = this.bombRadius || 3; 
-
+  const radius = this.bombRadius || 3; // the size of bomb explosion!
   const currentTileType = this.gridApi.getType(x, y);
+  console.log("currentTileType" , currentTileType); 
+
+    if (currentTileType === TILE_TYPE.playerspawn || currentTileType === TILE_TYPE.player1spot) {
+        console.log(`Saving ${currentTileType} at ${x},${y} to RememberSpotMap`);
+        
+        // Use the same string format "x,y" that your explosion cleanup uses
+        RememberSpotMap.set(`${x},${y}`, currentTileType);
+    }
+
+
   if (currentTileType === TILE_TYPE.bomb) {
       console.log("Already a bomb at this location!");
+      
       return null;
   }
 
   if (x == null || y == null) return;
+  
   
   
   this.gridApi.setType(x, y, TILE_TYPE.bomb);

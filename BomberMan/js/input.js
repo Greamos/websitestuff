@@ -1,6 +1,7 @@
 import { TILE_PROPS } from './grid.js';
 import { TILE_TYPE } from './grid.js';
-import { scheduleTask, createBombSprite, destroyBombSprite } from './game.js';
+import { scheduleTask, createBombSprite, destroyBombSprite,} from './game.js';
+import { SummonEffect, EFFECT_TYPES } from './GameItems/powerup.js';
 import { triggerExplosion } from './GameItems/explosion.js';
 
 export function bindArrowKeys(player, gridApi, options = {}) {
@@ -125,8 +126,9 @@ window.addEventListener('keydown', (e) => {
           if (player.isDead) return;
         
           // 1. Try to place the bomb and catch the data
+          const locationcheck = gridApi.getType(player.x, player.y);
           const bombData = player.placeBomb();
-
+            console.log(locationcheck);
 
           // 2. ONLY proceed if the bomb was successfully placed
           if (bombData) {
@@ -163,7 +165,16 @@ window.addEventListener('keydown', (e) => {
   });
 
 
-  
-  return processMovement; 
+  window.addEventListener('keydown', (e) => {
+      if (e.code === 'KeyE') {
+          e.preventDefault();
 
-}
+        console.log("E key pressed");
+        SummonEffect(EFFECT_TYPES.FIRE_UP, player, gridApi, options.loadedAssets);
+      }
+  });
+        
+
+            return processMovement; 
+        }
+

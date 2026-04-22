@@ -83,7 +83,7 @@ const api = {
   },
 
   // read the current type string stored in data-type
-  getType(x, y) {
+getType(x, y) {
     const cell = api.getCell(x, y);
     return cell ? cell.dataset.type : null;
   },

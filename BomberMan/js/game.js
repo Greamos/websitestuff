@@ -14,6 +14,7 @@ import { startTick } from './tick.js';
 import { initMultiplayer, remotePlayers } from './multiplayer.js';
 import { triggerExplosion } from './GameItems/explosion.js';
 
+
 const GRID_ID = 'game-grid';
 
 // --- PERSISTENCE TRACKING ---
@@ -65,6 +66,10 @@ export function destroyBombSprite(x, y) {
     activeBombSprites.delete(key);
   }
 }
+
+// export function SummonEffect(x, y, gridApi, loadedAssets) {
+// console.log("Summoning effect at:", x, y);
+// }
 
 document.addEventListener('DOMContentLoaded', async () => {
     // 1. Create the Grid API
