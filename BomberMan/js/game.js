@@ -151,7 +151,9 @@ document.addEventListener('DOMContentLoaded', async () => {
                     createBombSprite(remoteBomb.x, remoteBomb.y, gridApi, loaded);
 
                     scheduleTask(3000, () => {
-                        triggerExplosion(gridApi, remoteBomb.x, remoteBomb.y, 1, loaded);
+                        console.log(`BOOM! Remote Radius received: ${remoteBomb.radius} for player ${id}`);
+                        const r = remoteBomb.radius || 3;
+                        triggerExplosion(gridApi, remoteBomb.x, remoteBomb.y, r, loaded);
                         destroyBombSprite(remoteBomb.x, remoteBomb.y);
                         const index = ActiveBombArr.findIndex(b => b.x === remoteBomb.x && b.y === remoteBomb.y);
                         if (index !== -1) ActiveBombArr.splice(index, 1);

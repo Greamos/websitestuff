@@ -4,7 +4,6 @@ export const assets = {
     bomb: 'assets/player/bomb.png',
     explosion: 'assets/player/explosion.gif',
 
-    // --- Spritesheet configuration (V2) ---
     // Use `bomberman_sheet_V2.png` — frames are 49×49 px.
     // The Player class falls back to legacy images when `spritesheet` is absent.
     spritesheet: 'assets/bomberman_sheet_V2.png',
@@ -118,50 +117,96 @@ export const assets = {
     }
   },
   explosion: {
-    // Spritesheet configuration for explosion animation
-    spritesheet: 'assets/BomberManEffect.png',
+    spritesheet: 'assets/newFire.png', // Update to your new filename
     frameWidth: 48,
     frameHeight: 48,
     sheetOffsetX: 0,
     sheetOffsetY: 0,
-    // Rendering settings
-    renderScale: 1.0,   // 1:1 ratio
-    renderOffsetX: 0,
-    renderOffsetY: 0,
-    // For outer fires (row 2), slight offset to align with center
-    outerOffsetX: 0,   // Adjust if outer fires need horizontal shift
-    outerOffsetY: 0,   // Adjust if outer fires need vertical shift
-    globalFrameTrim: 0,
-    forceGlobalFrameTrim: false,
+    renderScale: 1.0,
     fps: 12,
-    // Animation rows: center (row 0), directional (rows 1-2)
-    // Each row has 7 frames (left = newest, right = oldest)
     animations: {
-      // Center explosion (no rotation)
-      "center": {
-        "default": { "row": 0, "start": 0, "count": 7 }
-      },
-      // Directional flames - OUTER (row 2, index 2)
-      "directional": {
-        "default": { "row": 2, "start": 0, "count": 7 }  // Use row 2 (index 2) for outer fires
-      },
-      // Middle flames (row 1) - for extended ranges
-      "middle": {
-        "default": { "row": 1, "start": 0, "count": 7 }
-      },
-      // Ending/fade (row 2) - same as directional
-      "ending": {
-        "default": { "row": 2, "start": 0, "count": 7 }
-      }
+      "center":      { "default": { "row": 0, "start": 0, "count": 7 } },
+      "middle":      { "default": { "row": 1, "start": 0, "count": 7 } }, // Straight beams
+      "directional": { "default": { "row": 2, "start": 0, "count": 7 } }, // Tips
+      "ending":      { "default": { "row": 2, "start": 0, "count": 7 } }
     }
-  }
+},};
 
-}
+export const SPRITE_CONFIG = {
+
+grass: {
+  spritesheet: 'assets/SpriteMap.png',
+  frameWidth: 16,
+  frameHeight: 16,
+  sheetOffsetX: 16, // second img = grass
+  sheetOffsetY: 0,
+  renderScale: 1.0,
+  fps: 0,
+},
+
+Spawnpoint: {
+  spritesheet: 'assets/SpriteMap.png',
+  frameWidth: 16,
+  frameHeight: 16,
+  sheetOffsetX: 48, //
+  sheetOffsetY: 0,
+  renderScale: 1.0,
+  fps: 0,
+},
+
+powerup: {
+  spritesheet: 'assets/SpriteMap.png',
+  frameWidth: 16,
+  frameHeight: 16,
+  sheetOffsetX: 112,//
+  sheetOffsetY: 0,
+  renderScale: 1.0,
+  fps: 0,
+},
+
+Box: {
+  spritesheet: 'assets/SpriteMap.png',
+  frameWidth: 16,
+  frameHeight: 16,
+  sheetOffsetX: 96,//
+  sheetOffsetY: 0,
+  renderScale: 1.0,
+  fps: 0,
+},
+
+Wallnormal: {
+  spritesheet: 'assets/SpriteMap.png',
+  frameWidth: 16,
+  frameHeight: 16,
+  sheetOffsetX: 4,//
+  sheetOffsetY: 0,
+  renderScale: 1.0,
+  fps: 0,
+},
+
+Wallside: {
+  spritesheet: 'assets/SpriteMap.png',
+  frameWidth: 16,
+  frameHeight: 16,
+  sheetOffsetX: 80,//
+  sheetOffsetY: 0,
+  renderScale: 1.0,
+  fps: 0,
+},
+};
+
+const TILE_TO_SPRITE = {
+  [TILE_TYPE.EMPTY]: 'grass',
+  [TILE_TYPE.wall]: 'Wallnormal',
+  [TILE_TYPE.Sidewall]: 'Wallside',
+  [TILE_TYPE.box]: 'Box',
+  [TILE_TYPE.powerup]: 'powerup',
+  [TILE_TYPE.playerspawn]: 'Spawnpoint',
+  [TILE_TYPE.player1spot]: 'Spawnpoint',
+};
+ 
 
 
-// Preload helper: collects all string paths from the asset object,
-// loads them as Image objects and returns a Promise that resolves
-// to a lookup map { path: Image }
 export function preloadAssets(assetObj) {
   const paths = new Set();
 

@@ -4,7 +4,6 @@ export const assets = {
     bomb: 'assets/player/bomb.png',
     explosion: 'assets/player/explosion.gif',
 
-    // --- Spritesheet configuration (V2) ---
     // Use `bomberman_sheet_V2.png` — frames are 49×49 px.
     // The Player class falls back to legacy images when `spritesheet` is absent.
     spritesheet: 'assets/bomberman_sheet_V2.png',
@@ -131,9 +130,81 @@ export const assets = {
       "directional": { "default": { "row": 2, "start": 0, "count": 7 } }, // Tips
       "ending":      { "default": { "row": 2, "start": 0, "count": 7 } }
     }
-}
+},};
+
+export const SPRITE_CONFIG = {
+
+grass: {
+  spritesheet: 'assets/SpriteMap.png',
+  frameWidth: 16,
+  frameHeight: 16,
+  sheetOffsetX: 16, // second img = grass
+  sheetOffsetY: 0,
+  renderScale: 1.0,
+  fps: 0,
+},
+
+Spawnpoint: {
+  spritesheet: 'assets/SpriteMap.png',
+  frameWidth: 16,
+  frameHeight: 16,
+  sheetOffsetX: 48, //
+  sheetOffsetY: 0,
+  renderScale: 1.0,
+  fps: 0,
+},
+
+powerup: {
+  spritesheet: 'assets/SpriteMap.png',
+  frameWidth: 16,
+  frameHeight: 16,
+  sheetOffsetX: 112,//
+  sheetOffsetY: 0,
+  renderScale: 1.0,
+  fps: 0,
+},
+
+Box: {
+  spritesheet: 'assets/SpriteMap.png',
+  frameWidth: 16,
+  frameHeight: 16,
+  sheetOffsetX: 96,//
+  sheetOffsetY: 0,
+  renderScale: 1.0,
+  fps: 0,
+},
+
+Wallnormal: {
+  spritesheet: 'assets/SpriteMap.png',
+  frameWidth: 16,
+  frameHeight: 16,
+  sheetOffsetX: 64,//
+  sheetOffsetY: 0,
+  renderScale: 1.0,
+  fps: 0,
+},
+
+Wallside: {
+  spritesheet: 'assets/SpriteMap.png',
+  frameWidth: 16,
+  frameHeight: 16,
+  sheetOffsetX: 80,//
+  sheetOffsetY: 0,
+  renderScale: 1.0,
+  fps: 0,
+},
 };
 
+// export const TILE_TO_SPRITE = {
+//   'empty': 'grass',
+//   'wall': 'Wallnormal',
+//   'Sidewall': 'Wallside',
+//   'box': 'Box',
+//   'powerup': 'powerup',
+//   'playerspawn': 'Spawnpoint',
+//   'player1spot': 'Spawnpoint',
+// };
+ 
 
 
 export function preloadAssets(assetObj) {

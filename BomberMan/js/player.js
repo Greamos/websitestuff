@@ -5,6 +5,7 @@ export class Player {
   // options: { moveDuration: number (ms), loadedAssets: { [path]: Image } }
   constructor(id, spriteUrl, options = {}) {
     this.id = id;
+    this.bombRadius = 3;
     this.spriteUrl = spriteUrl;
     this.x = null;
     this.y = null;
@@ -68,11 +69,14 @@ export class Player {
     const cell = gridApi.getCell(x, y);
     const gridRect = gridApi.container.getBoundingClientRect();
     const cellRect = cell.getBoundingClientRect();
-    const left = cellRect.left - gridRect.left + cellRect.width / 2;
-    const top = cellRect.top - gridRect.top + cellRect.height / 2;
-    this.img.style.left = `${left}px`;
-    this.img.style.top = `${top}px`;
+ // Calculate center
+const left = cellRect.left - gridRect.left + cellRect.width / 2;
+const top = cellRect.top - gridRect.top + cellRect.height / 2;
 
+// --- ADD THE NUDGE HERE ---
+const visualNudgeY = -12; // Negative moves him UP. Try -12 to start.
+this.img.style.left = `${left}px`;
+this.img.style.top = `${top + visualNudgeY}px`;
 
 
 
@@ -119,6 +123,8 @@ export class Player {
       // read optional source offsets from assets (pixels inside source image)
       const srcOffX = (assets && assets.player && (assets.player.sheetOffsetX || 0)) || 0;
       const srcOffY = (assets && assets.player && (assets.player.sheetOffsetY || 0)) || 0;
+
+      
 
       // allow small display nudges from assets (pixels)
       const renderNudgeX = (assets && assets.player && (assets.player.renderOffsetX || 0)) || 0;
@@ -282,7 +288,7 @@ export class Player {
     this._setSpriteFrameByIndex(frames[0]);
   }
 
-moveTo(gridApi, newX, newY, force = false) {
+moveTo(gridApi, newX, newY, force = false) { //da movement code yas//
     if (this.x === null || this.y === null) return this.place(gridApi, newX, newY);
     if (!force && this.isMoving) return; 
 
@@ -312,9 +318,9 @@ moveTo(gridApi, newX, newY, force = false) {
     const cellRect = targetCell.getBoundingClientRect();
     const left = cellRect.left - gridRect.left + cellRect.width / 2;
     const top = cellRect.top - gridRect.top + cellRect.height / 2;
-
-    this.img.style.left = `${left}px`;
-    this.img.style.top = `${top}px`;
+const visualNudgeY = -12; 
+this.img.style.left = `${left}px`;
+this.img.style.top = `${top + visualNudgeY}px`;
 
     const onEnd = (ev) => {
       if (ev.propertyName !== 'left' && ev.propertyName !== 'top') return;
@@ -405,6 +411,7 @@ moveTo(gridApi, newX, newY, force = false) {
 placeBomb() {
   const x = this.x;
   const y = this.y;
+  const radius = this.bombRadius || 3; 
 
   const currentTileType = this.gridApi.getType(x, y);
   if (currentTileType === TILE_TYPE.bomb) {
@@ -414,16 +421,19 @@ placeBomb() {
 
   if (x == null || y == null) return;
   
+  
   this.gridApi.setType(x, y, TILE_TYPE.bomb);
       if (this.myNetState) {
         this.myNetState.setState("bomb", {
            x: this.x, 
            y: this.y, 
-           id: Date.now(), // unique ID for this bomb 
+           id: Date.now(),
+           radius: radius,
           }); // this is the line that sends the bomb placement to other players
-    }
+    
+        }
   console.log('Bomb planted at', x, y);
-  return { x, y, fuse: 3000 };
+  return { x, y, fuse: 3000, radius: radius };
 }}
 
 

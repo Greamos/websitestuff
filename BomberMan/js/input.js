@@ -111,6 +111,14 @@ function processMovement() {
     }
 }
 window.addEventListener('keydown', (e) => {
+    if (e.key === 'p') { // Press 'P' to increase fire
+        player.bombRadius += 1;
+        console.log("New radius:", player.bombRadius);
+    }
+});
+
+
+window.addEventListener('keydown', (e) => {
       if (e.code === 'Space') {
           e.preventDefault();
 
@@ -142,8 +150,8 @@ window.addEventListener('keydown', (e) => {
                     player.myNetState.setState("bomb", null);
                 }   
 
-                  triggerExplosion(gridApi, bombData.x, bombData.y, 5, loadedAssets);
-                  console.log(`Bomb at (${bombData.x}, ${bombData.y}) exploded. Removed from activeBombs.`);
+                  triggerExplosion(gridApi, bombData.x, bombData.y, bombData.radius, loadedAssets);
+                  console.log(`Bomb at (${bombData.x}, ${bombData.y}) exploded. Removed from activeBombs. (${bombData.radius} radius explosion)`);
 
               });
               

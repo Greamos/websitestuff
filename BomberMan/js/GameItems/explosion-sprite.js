@@ -65,8 +65,8 @@ render(gridApi) {
     const div = document.createElement('div');
     div.className = 'explosion-sprite';
     div.style.position = 'absolute';
-    div.style.width = '5.1rem'; // Tiny overlap to prevent 1px gaps between tiles
-    div.style.height = '5.1rem';
+    div.style.width = '50px'; // Tiny overlap to prevent 1px gaps between tiles
+    div.style.height = '50px';
     div.style.backgroundImage = `url(${assets.explosion.spritesheet})`;
     div.style.backgroundRepeat = 'no-repeat';
     div.style.imageRendering = 'pixelated'; // Keeps it crisp
