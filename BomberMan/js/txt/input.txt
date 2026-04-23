@@ -1,8 +1,8 @@
-import { TILE_PROPS, TILE_TYPE  } from './grid.js';
+import { TILE_PROPS } from './grid.js';
+import { TILE_TYPE } from './grid.js';
 import { scheduleTask, createBombSprite, destroyBombSprite,} from './game.js';
 import { SummonEffect, EFFECT_TYPES } from './GameItems/powerup.js';
 import { triggerExplosion } from './GameItems/explosion.js';
-import { RPC } from "https://esm.sh/playroomkit";
 
 export function bindArrowKeys(player, gridApi, options = {}) {
  
@@ -51,7 +51,7 @@ export function bindArrowKeys(player, gridApi, options = {}) {
     if (newType === TILE_TYPE.powerup) {
         SummonEffect(EFFECT_TYPES.FIRE_UP, player, gridApi, loadedAssets);
         gridApi.setType(nx, ny, TILE_TYPE.EMPTY);
-        RPC.call("updateTile", { x: nx, y: ny, type: TILE_TYPE.EMPTY });
+        
     }
     
 

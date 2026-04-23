@@ -178,7 +178,7 @@ Wallnormal: {
   spritesheet: 'assets/SpriteMap.png',
   frameWidth: 16,
   frameHeight: 16,
-  sheetOffsetX: 4,//
+  sheetOffsetX: 64,//
   sheetOffsetY: 0,
   renderScale: 1.0,
   fps: 0,
@@ -195,15 +195,15 @@ Wallside: {
 },
 };
 
-const TILE_TO_SPRITE = {
-  [TILE_TYPE.EMPTY]: 'grass',
-  [TILE_TYPE.wall]: 'Wallnormal',
-  [TILE_TYPE.Sidewall]: 'Wallside',
-  [TILE_TYPE.box]: 'Box',
-  [TILE_TYPE.powerup]: 'powerup',
-  [TILE_TYPE.playerspawn]: 'Spawnpoint',
-  [TILE_TYPE.player1spot]: 'Spawnpoint',
-};
+// export const TILE_TO_SPRITE = {
+//   'empty': 'grass',
+//   'wall': 'Wallnormal',
+//   'Sidewall': 'Wallside',
+//   'box': 'Box',
+//   'powerup': 'powerup',
+//   'playerspawn': 'Spawnpoint',
+//   'player1spot': 'Spawnpoint',
+// };
  
 
 

@@ -1,4 +1,4 @@
-import { getState, setState, isHost, RPC } from "https://esm.sh/playroomkit"; 
+import { getState, setState, isHost } from "https://esm.sh/playroomkit"; 
 import { Player } from './player.js';
 import { Bomb } from './bomb.js';
 import { bindArrowKeys } from './input.js';
@@ -78,20 +78,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     // 2. Preload Assets
     const loaded = await preloadAssets(assets);
 
-        // --- NEW CODE: THE WALKIE-TALKIE LISTENER ---
-    RPC.register("updateTile", (data) => {
-        console.log(`Walkie-Talkie: Someone changed tile (${data.x}, ${data.y}) to ${data.type}`);
-        
-        // 1. Update the local visuals for everyone else
-        gridApi.setType(data.x, data.y, data.type);
-        
-        // 2. If this computer is the Host, permanently save the map 
-        // so any players who join the game late don't see the ghost powerup!
-        if (isHost()) {
-            setState("map", gridApi.map, true);
-        }
-    });
-
     // 3. Connect to Multiplayer
     console.log("Connecting to Playroom...");
     const { myNetState, player } = await initMultiplayer(gridApi, { player: assets.player, loaded: loaded });
@@ -123,9 +109,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     // Global reference for debugging
     window.__game = { gridApi, player, assetsLoaded: loaded, myNetState }; 
 
-
-    
-    
     // 7. Start the Loop
     startTick((deltaTime) => {
         if (!player) return; 

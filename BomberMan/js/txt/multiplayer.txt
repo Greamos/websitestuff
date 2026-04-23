@@ -1,6 +1,3 @@
-//https://dev.joinplayroom.com/Y5S529aaN1UQIwqHsAd9/configuration
-
-
 import * as Playroom from "https://esm.sh/playroomkit";
 import { Player } from './player.js';
 import { findAllSpawns } from './grid.js'; 
@@ -8,7 +5,7 @@ import { findAllSpawns } from './grid.js';
 export const remotePlayers = {};
 
 export async function initMultiplayer(gridApi, assets, options = {}) {
-    await Playroom.insertCoin({ gameId: "Y5S529aaN1UQIwqHsAd9", matchmaking: true  }); 
+    await Playroom.insertCoin(); 
     const joinedOrder = [];
 
     return new Promise((resolve) => {

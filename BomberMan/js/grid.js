@@ -21,7 +21,7 @@ export const TILE_TYPE = { // for getting data on grid
     [TILE_TYPE.bomb]: { walkable: false, breakable: false },
     [TILE_TYPE.walltop] : {walkable: false, breakable: false},
     [TILE_TYPE.explosion]: { walkable: true, breakable: false, damage: true },
-    [TILE_TYPE.powerup]: { walkable: true, breakable: false, powerup: true },
+    [TILE_TYPE.powerup]: { walkable: true, breakable: true, powerup: true },
     [TILE_TYPE.player]: { walkable: false, breakable: false, player: true },
     [TILE_TYPE.playerspawn]: { walkable: true, breakable: false, spawn: true },
     [TILE_TYPE.player1spot]: { walkable: true, breakable: false,},
@@ -64,6 +64,7 @@ const api = {
     5: TILE_TYPE.player1spot,
     6: TILE_TYPE.bomb,
     7: TILE_TYPE.walltop, 
+    9: TILE_TYPE.explosion,
   },
   type2code: {
     [TILE_TYPE.EMPTY]: 0,
@@ -74,6 +75,7 @@ const api = {
     [TILE_TYPE.player1spot]: 5,
     [TILE_TYPE.bomb]: 6,
     [TILE_TYPE.walltop]: 7,
+    [TILE_TYPE.explosion]: 9,
   },
   // return the <div> for the given x,y coordinates (or null if off‑grid)
   getCell(x, y) {
@@ -83,10 +85,10 @@ const api = {
   },
 
   // read the current type string stored in data-type
-getType(x, y) {
+  getType(x, y) {
     const cell = api.getCell(x, y);
     return cell ? cell.dataset.type : null;
-  },
+    },
 
   // set the type on a cell and toggle a matching CSS class
   setType(x, y, type = TILE_TYPE.EMPTY) {
@@ -103,36 +105,50 @@ getType(x, y) {
     if (type) cell.classList.add(`tile-${type}`);
 
     // --- SPRITE LOGIC ---
-    const spriteName = TILE_TO_SPRITE[type];
-    const sprite = SPRITE_CONFIG[spriteName];
-    const scale = 3.0; 
+    if (type !== TILE_TYPE.explosion) {  // Skip background changes for explosions
+      const spriteName = TILE_TO_SPRITE[type];
+      const sprite = SPRITE_CONFIG[spriteName];
+      const scale = 3.0; 
 
-    // Reset base styles
-    cell.style.imageRendering = 'pixelated';
-    cell.style.backgroundColor = 'transparent';
-    cell.style.border = 'none';
-    cell.style.backgroundSize = `384px 48px`; // 128 * 3
+      // Reset base styles
+      cell.style.imageRendering = 'pixelated';
+      cell.style.backgroundColor = 'transparent';
+      cell.style.border = 'none';
+      cell.style.backgroundSize = `384px 48px`; // 128 * 3
 
-    if (sprite) {
-      // If we found a specific sprite (Wall, Box, Grass, Powerup, etc.)
-      cell.style.backgroundImage = `url('${sprite.spritesheet}')`;
-      
-      const posX = -(sprite.sheetOffsetX * scale);
-      const posY = -(sprite.sheetOffsetY * scale);
-      cell.style.backgroundPosition = `${posX}px ${posY}px`;
-    } else {
-      // DEFAULT: If no sprite is found (Bomb/Explosion), use Grass background
-      // Assuming Grass is at Offset 16 in your 128px spritemap
-      const grassX = -(16 * scale); 
-      cell.style.backgroundImage = `url('assets/SpriteMap.png')`;
-      cell.style.backgroundPosition = `${grassX}px 0px`;
+      if (sprite) {
+        const posX = -(sprite.sheetOffsetX * scale);
+        const posY = -(sprite.sheetOffsetY * scale);
+        
+        if (type === TILE_TYPE.wall || type === TILE_TYPE.walltop) {
+          // Walls: just the wall sprite (no grass underneath)
+          cell.style.backgroundImage = `url('${sprite.spritesheet}')`;
+          cell.style.backgroundPosition = `${posX}px ${posY}px`;
+        } else {
+          // Non-walls: sprite underneath, grass on top (visible through transparent sprites)
+          const grassX = -(16 * scale);
+          cell.style.backgroundImage = `url('${sprite.spritesheet}'), url('assets/SpriteMap.png')`;
+          cell.style.backgroundPosition = `${posX}px ${posY}px, ${grassX}px 0px`;
+          cell.style.backgroundSize = `384px 48px, 384px 48px`;
+        }
+      } else {
+        // DEFAULT: If no sprite is found (Bomb/Explosion), use Grass background
+        const grassX = -(16 * scale); 
+        cell.style.backgroundImage = `url('assets/SpriteMap.png')`;
+        cell.style.backgroundPosition = `${grassX}px 0px`;
+      }
     }
-
-    // Sync numeric map if present
+    console.log("Setting type to", type, "at", x, y);
+    const code = api.type2code[type];
+    console.log("Syncing map for", type, "code", code, "map exists", !!api.map);
     if (api.map && api.map[y] && typeof api.map[y][x] !== 'undefined') {
-      const code = api.type2code && api.type2code[type];
-      if (typeof code !== 'undefined') api.map[y][x] = code;
+        console.log("Setting map", y, x, "to", code);
+        api.map[y][x] = code;
+        console.log("Map now", api.map[y][x]);
     }
+    // Still update dataset and classes for explosion
+    cell.dataset.type = type;
+    cell.title = `(${x},${y}) ${type}` + (TILE_PROPS[type]?.walkable ? ' ✔' : ' ✖') + (TILE_PROPS[type]?.breakable ? ' – breakable' : '');
   },
 
   // helpers built on getType
@@ -231,6 +247,7 @@ export function buildFromMap(gridApi, map) {
       gridApi.setType(x, y, code2type[type] || TILE_TYPE.EMPTY);
     }
   }
+  gridApi.map = map;
 }
 
 export function findSpawn(map) { // find spawn point in map and return coordinates as {x,y}

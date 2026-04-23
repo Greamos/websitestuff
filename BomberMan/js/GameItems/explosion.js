@@ -1,11 +1,15 @@
 import { TILE_TYPE } from '../grid.js'; 
 import { findBombAt, scheduleTask } from '../game.js';
 import { ExplosionSprite } from './explosion-sprite.js';
-import { setState } from "https://esm.sh/playroomkit";
+import { setState, isHost, RPC } from "https://esm.sh/playroomkit";
 
-
+// Keep this export so other files (like player.js) don't break
 export const RememberSpotMap = new Map();
+
 export function triggerExplosion(gridApi, startX, startY, radius = 1, loadedAssets = null) {
+    // This local map belongs ONLY to this specific explosion instance.
+    // This prevents overlapping bombs from "forgetting" what they hit.
+    const LocalExplosionMemory = new Map();
     const tilesOnFire = [];
 
     const playerPos = gridApi.getPlayerCoords();
@@ -20,58 +24,58 @@ export function triggerExplosion(gridApi, startX, startY, radius = 1, loadedAsse
 
     // Helper to calculate fire for one direction
     function CalcFireDirection(dir) {
-        
         const hitTiles = [];
     
         for (let i = 1; i <= radius; i++) {
             const checkX = startX + (i * dir.dx);
             const checkY = startY + (i * dir.dy);
+            const coordKey = `${checkX},${checkY}`;
 
             const tileType = gridApi.getType(checkX, checkY);
 
+            // 1. Stop at permanent walls
             if (tileType === TILE_TYPE.wall) break;
+
+            // 2. Remember the original tile before it turns into fire
+            // Only remember if we haven't seen this tile yet and it's not already fire
+            if (!LocalExplosionMemory.has(coordKey) && tileType !== TILE_TYPE.explosion) {
+                LocalExplosionMemory.set(coordKey, tileType);
+            }
 
             const nextTile = gridApi.getType(checkX + dir.dx, checkY + dir.dy);
             const isTip = (i === radius) || (nextTile === TILE_TYPE.wall) || (nextTile === undefined);
 
+            // 3. Handle Boxes
             if (tileType === TILE_TYPE.box) {
-    // 1. Add it to the fire list so the sprite appears!
-    hitTiles.push({ x: checkX, y: checkY, stage: 'directional', dirName: dir.name }); 
+                hitTiles.push({ x: checkX, y: checkY, stage: 'directional', dirName: dir.name }); 
+                gridApi.setType(checkX, checkY, TILE_TYPE.explosion);
 
-    // 2. Set the tile to explosion visually
-    gridApi.setType(checkX, checkY, TILE_TYPE.explosion);
+                // Mark specifically that a box was destroyed here
+                LocalExplosionMemory.set(coordKey, "BOX_DESTROYED");
 
-    // 3. Put the FUTURE type into the RememberSpotMap
-    // When the explosion cleanup runs, it will see this and set it to playerspawn
-    RememberSpotMap.set(`${checkX},${checkY}`, TILE_TYPE.playerspawn);
+                console.log(`Box hit at (${checkX}, ${checkY})`);
+                break; // Stop the beam
+            }
 
-    console.log("Box hit! Fire started. Scheduled to become spawn point.");
-
-    // 4. Stop the beam from going FURTHER (but the box itself is now fire)
-    break; 
-}
+            // 4. Handle Chain Reactions (Bomb triggers bomb)
             if (tileType === TILE_TYPE.bomb) {
                 const bomb = findBombAt(checkX, checkY);
-                if (bomb && bomb.task) bomb.task.time = 250;
+                if (bomb && bomb.task) bomb.task.time = 250; // Explode soon
                 break; 
             }
             
-            if (tileType === TILE_TYPE.playerspawn || tileType === TILE_TYPE.player1spot) { //HIER POWER UP STUFF TOEVOEGEENNNN!!//
-
-                console.log("this is data", gridApi.getType(checkX, checkY));
-
-                RememberSpotMap.set(`${checkX},${checkY}`, gridApi.getType(checkX, checkY)); // store original type before explosion
-                console.log("remember spot", RememberSpotMap);
+            // 5. Special Tiles (Spawns, Powerups)
+            if (tileType === TILE_TYPE.playerspawn || tileType === TILE_TYPE.player1spot || tileType === TILE_TYPE.powerup) {
                 hitTiles.push({ x: checkX, y: checkY, stage: 'directional', dirName: dir.name });
+                gridApi.setType(checkX, checkY, TILE_TYPE.explosion);
                 break; 
             }
             
-
-            if (tileType === TILE_TYPE.EMPTY || tileType === TILE_TYPE.powerup || tileType === TILE_TYPE.explosion) {
+            // 6. Empty space / Ongoing explosion
+            if (tileType === TILE_TYPE.EMPTY || tileType === TILE_TYPE.explosion) {
                 hitTiles.push({ x: checkX, y: checkY, stage: isTip ? 'directional' : 'middle', dirName: dir.name });
+                gridApi.setType(checkX, checkY, TILE_TYPE.explosion);
                 if (nextTile === TILE_TYPE.box) continue;
-            } else {
-
             }
         }
         return hitTiles;
@@ -84,20 +88,17 @@ export function triggerExplosion(gridApi, startX, startY, radius = 1, loadedAsse
         tilesOnFire.push(...fireResults[dir.name]);
     }
 
-    // 2. SMART CENTER LOGIC
-    // Check which axes have fire
+    // 2. Center Logic
     const hasVertical = fireResults.up.length > 0 || fireResults.down.length > 0;
     const hasHorizontal = fireResults.left.length > 0 || fireResults.right.length > 0;
 
-    let centerStage = 'center'; // Default to the Cross (Row 0)
+    let centerStage = 'center'; 
     let centerDir = null;
 
-    // If it's ONLY vertical fire, use the vertical beam (Row 1 rotated)
     if (hasVertical && !hasHorizontal) {
         centerStage = 'middle';
         centerDir = 'up'; 
     } 
-    // If it's ONLY horizontal fire, use the horizontal beam (Row 1)
     else if (hasHorizontal && !hasVertical) {
         centerStage = 'middle';
         centerDir = 'right';
@@ -116,37 +117,62 @@ export function triggerExplosion(gridApi, startX, startY, radius = 1, loadedAsse
         const sprite = new ExplosionSprite(tile.x, tile.y, tile.dirName, tile.stage, { loadedAssets, gridApi });
         sprite.render(gridApi);
         explosionSprites.push(sprite);
-        gridApi.setType(tile.x, tile.y, TILE_TYPE.explosion);
     }
 
-    // Check if player hit
+    // 5. Check if local player was hit
     const allTiles = [{x: startX, y: startY}, ...tilesOnFire];
     for (const tile of allTiles) {
         if (playerPos && tile.x === playerPos.x && tile.y === playerPos.y) playerHit = true;
     }
 
-    // Cleanup
-    scheduleTask(1100, () => {      // bug! player spawn gets cleaned.. is that here? //
+    // 6. Cleanup Logic
+    scheduleTask(1100, () => {
         for (const sprite of explosionSprites) sprite.destroy();
+        
         let mapChanged = false;
+
         for (const tile of allTiles) {
-           if (gridApi.isType(tile.x, tile.y, TILE_TYPE.explosion)) {
-    const coordKey = `${tile.x},${tile.y}`;
-    
-    // Check if THIS specific coordinate was a spawn point
-    if (RememberSpotMap.has(coordKey)) {
-        const originalType = RememberSpotMap.get(coordKey);
-        gridApi.setType(tile.x, tile.y, originalType);
-        RememberSpotMap.delete(coordKey); // Clear it after restoring
-        console.log("Restored special tile:", originalType);
-    } else {
-        // Otherwise, it was just a normal floor/box, set to empty
-        gridApi.setType(tile.x, tile.y, TILE_TYPE.EMPTY);
-    }
-    mapChanged = true;
-}
+            const coordKey = `${tile.x},${tile.y}`;
+            
+            // CRITICAL BUG FIX: Only clean up if the tile is STILL an explosion.
+            // If another bomb already cleaned this tile and put a powerup there, 
+            // we should not touch it!
+            if (gridApi.getType(tile.x, tile.y) !== TILE_TYPE.explosion) {
+                continue; 
+            }
+
+            // Restore logic
+            if (LocalExplosionMemory.has(coordKey)) {
+                const originalType = LocalExplosionMemory.get(coordKey);
+
+                if (originalType === "BOX_DESTROYED") {
+                    // Only the Host decides what drops from a box to prevent desyncs
+                    if (isHost()) {
+                        const dropsPowerup = Math.random() < 0.35; // 35% chance
+                        const finalType = dropsPowerup ? TILE_TYPE.powerup : TILE_TYPE.EMPTY;
+                        
+                        gridApi.setType(tile.x, tile.y, finalType);
+                        // Tell everyone else what we decided
+                        RPC.call("updateTile", { x: tile.x, y: tile.y, type: finalType });
+                    }
+                } else {
+                    // Restore spawn points, empty grass, or whatever was there
+                    gridApi.setType(tile.x, tile.y, originalType);
+                }
+            } else {
+                // Default fallback: Grass
+                gridApi.setType(tile.x, tile.y, TILE_TYPE.EMPTY);
+            }
+            mapChanged = true;
         }
-        if (mapChanged) setState("map", gridApi.map, true); // this updates map for everyone, which is important if boxes were destroyed
-        if (playerHit && typeof gridApi.killPlayer === 'function') gridApi.killPlayer(); // kils player if they were hit
+
+        // Only the host needs to save the permanent room map state
+        if (mapChanged && isHost()) {
+            setState("map", gridApi.map, true);
+        }
+        
+        if (playerHit && typeof gridApi.killPlayer === 'function') {
+            gridApi.killPlayer();
+        }
     });
 }
