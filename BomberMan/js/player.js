@@ -79,6 +79,20 @@ const visualNudgeY = -12; // Negative moves him UP. Try -12 to start.
 this.img.style.left = `${left}px`;
 this.img.style.top = `${top + visualNudgeY}px`;
 
+    // Create player hitbox for collision detection
+    if (!this.hitboxElement) {
+      this.hitboxElement = document.createElement('div');
+      this.hitboxElement.className = 'player-hitbox';
+      this.hitboxElement.style.width = '30px';
+      this.hitboxElement.style.height = '45px';
+      this.hitboxElement.style.setProperty('--move-duration', `${this.moveDuration}ms`);
+      gridApi.container.appendChild(this.hitboxElement);
+    }
+    
+    // Position hitbox at the same center as player
+    this.hitboxElement.style.left = `${left - 15}px`; // -15 to center the 30px box
+    this.hitboxElement.style.top = `${top + visualNudgeY - 15}px`;
+
 
 
   }
@@ -323,6 +337,12 @@ const visualNudgeY = -12;
 this.img.style.left = `${left}px`;
 this.img.style.top = `${top + visualNudgeY}px`;
 
+    // Move hitbox with player
+    if (this.hitboxElement) {
+      this.hitboxElement.style.left = `${left - 15}px`;
+      this.hitboxElement.style.top = `${top + visualNudgeY - 15}px`;
+    }
+
     const onEnd = (ev) => {
       if (ev.propertyName !== 'left' && ev.propertyName !== 'top') return;
       this.img.removeEventListener('transitionend', onEnd);
@@ -396,6 +416,7 @@ this.img.style.top = `${top + visualNudgeY}px`;
         if (this.img) {
         this.img.remove();
         this.img = null;
+        this.hitboxElement?.remove();
     }
     
     // 2. Add an 'isDead' flag so your Input file knows to stop moving the player
@@ -406,10 +427,7 @@ this.img.style.top = `${top + visualNudgeY}px`;
     // 3. Optional: Add a death animation, or trigger a game-over UI
   }
 
-
-
-
-placeBomb() {
+  placeBomb() {
 
   console.log("Attempting to place bomb at", this.x, this.y);
   const x = this.x;

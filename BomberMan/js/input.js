@@ -46,12 +46,22 @@ export function bindArrowKeys(player, gridApi, options = {}) {
     // Move the player sprite
     player.moveTo(gridApi, nx, ny);
 
-    // After move completes, check if we stepped on a powerup
+    // After move completes, check if we stepped on a powerup or fire
     const newType = gridApi.getType(nx, ny);
     if (newType === TILE_TYPE.powerup) {
         SummonEffect(EFFECT_TYPES.FIRE_UP, player, gridApi, loadedAssets);
         gridApi.setType(nx, ny, TILE_TYPE.EMPTY);
         RPC.call("updateTile", { x: nx, y: ny, type: TILE_TYPE.EMPTY });
+    }
+    
+    // Kill player after they walk into fire (after animation completes)
+    if (newType === TILE_TYPE.explosion) {
+        console.log("Player hit fire at:", nx, ny);
+        setTimeout(() => {
+            if (player && typeof player.die === 'function' && !player.isDead) {
+                player.die();
+            }
+        }, player.moveDuration || 350);
     }
     
 
@@ -75,7 +85,7 @@ function isWalkable(x, y) {
         5: TILE_TYPE.player1spot,
         6: TILE_TYPE.bomb,
         7: TILE_TYPE.walltop,
-        8: TILE_TYPE.explosion,
+        9: TILE_TYPE.explosion,
     };
     
     const stringType = code2type[rawCode];

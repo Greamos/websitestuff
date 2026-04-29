@@ -96,6 +96,27 @@ const api = {
     if (!cell) return;
 
     cell.dataset.type = type;
+
+    const existingHitbox = cell.querySelector('.item-hitbox');
+    if (existingHitbox) {
+        existingHitbox.remove();
+    }
+
+    // 2. ADD HITBOX IF TYPE IS POWERUP
+    if (type === TILE_TYPE.powerup) {
+      console.log(`Creating hitbox for powerup at ${x}, ${y}`);
+        const hitbox = document.createElement('div');
+        hitbox.classList.add('item-hitbox');
+        
+        // Ensure it fills the cell (since your CSS uses position: absolute)
+        hitbox.style.width = '100%';
+        hitbox.style.height = '100%';
+        hitbox.style.top = '0';
+        hitbox.style.left = '0';
+
+        cell.appendChild(hitbox);
+    }
+
     cell.title = `(${x},${y}) ${type}`
                + (TILE_PROPS[type]?.walkable ? ' ✔' : ' ✖')
                + (TILE_PROPS[type]?.breakable ? ' – breakable' : '');

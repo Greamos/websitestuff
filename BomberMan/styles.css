@@ -60,6 +60,7 @@ button:hover {
 }
 
 .grid-item {
+    position: relative;
     width: 48px;
     height: 48px;
     display: block;
@@ -110,7 +111,6 @@ button:hover {
     pointer-events: none;
     z-index: 3;
 }
-
 
 
 .grid-item[data-type="wall"] { background: #333; border: 2px solid #222; }
@@ -168,4 +168,34 @@ button:hover {
   color: white;
   font-family: monospace;
   font-size: 10px;
+}
+
+/* Debug hitboxes - remove later */
+.player-hitbox {
+    position: absolute;
+    border: 2px solid rgba(0, 255, 0, 0.5);
+    background-color: rgba(0, 255, 0, 0.1);
+    pointer-events: none;
+    z-index: 100;
+    transition: left var(--move-duration, 350ms) ease-in-out, top var(--move-duration, 350ms) ease-in-out;
+}
+
+.fire-hitbox {
+    position: absolute;
+    border: 2px solid rgba(255, 0, 0, 0.5);
+    background-color: rgba(255, 0, 0, 0.1);
+    pointer-events: none;
+    z-index: 99;
+}
+
+.item-hitbox {
+    position: absolute;
+    top: 0;             /* <--- ADD THIS */
+    left: 0;            /* <--- ADD THIS */
+    width: 100%;        /* <--- Ensure it fills the tile */
+    height: 100%;       /* <--- Ensure it fills the tile */
+    border: 2px solid rgba(0, 26, 255, 0.5);
+    background-color: rgba(4, 7, 56, 0.1);
+    pointer-events: none;
+    z-index: 99;
 }

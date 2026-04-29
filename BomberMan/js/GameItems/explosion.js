@@ -125,6 +125,13 @@ export function triggerExplosion(gridApi, startX, startY, radius = 1, loadedAsse
         if (playerPos && tile.x === playerPos.x && tile.y === playerPos.y) playerHit = true;
     }
 
+
+    if (playerHit && typeof gridApi.killPlayer === 'function') {
+        gridApi.killPlayer();
+    }
+    // Note: Player death is now handled in input.js when they walk into fire tiles
+    // This prevents issues with multiplayer where the wrong player could be killed
+
     // 6. Cleanup Logic
     scheduleTask(1100, () => {
         for (const sprite of explosionSprites) sprite.destroy();
@@ -169,10 +176,6 @@ export function triggerExplosion(gridApi, startX, startY, radius = 1, loadedAsse
         // Only the host needs to save the permanent room map state
         if (mapChanged && isHost()) {
             setState("map", gridApi.map, true);
-        }
-        
-        if (playerHit && typeof gridApi.killPlayer === 'function') {
-            gridApi.killPlayer();
         }
     });
 }

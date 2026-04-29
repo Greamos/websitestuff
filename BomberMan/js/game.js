@@ -133,6 +133,9 @@ document.addEventListener('DOMContentLoaded', async () => {
         // 0. Update local player movement
         updateMovement(); 
 
+        // Check collision between player hitbox and fire hitboxes
+        checkFireCollision(player, gridApi); 
+
         // 1. UPLOAD (Your position to others)
         if (myNetState && (player.x !== lastNetX || player.y !== lastNetY)) {
             myNetState.setState("pos", { x: player.x, y: player.y }, false);
@@ -218,3 +221,67 @@ document.addEventListener('DOMContentLoaded', async () => {
                 }
             });
         });
+
+
+// Check collision between player hitbox and fire hitboxes
+function checkFireCollision(player, gridApi) {
+    // Get all fire hitbox elements
+    const fireHitboxes = document.querySelectorAll('.fire-hitbox');
+    const fireRects = [];
+    
+    for (const fireBox of fireHitboxes) {
+        // Skip hidden hitboxes (width/height = 0)
+        const fw = parseFloat(fireBox.style.width) || 0;
+        const fh = parseFloat(fireBox.style.height) || 0;
+        if (fw === 0 || fh === 0) continue;
+        
+        fireRects.push(fireBox.getBoundingClientRect());
+    }
+
+    // Check local player
+    if (player && !player.isDead && player.hitboxElement) {
+        const playerRect = player.hitboxElement.getBoundingClientRect();
+        
+        for (const fireRect of fireRects) {
+            if (playerRect.left < fireRect.right &&
+                playerRect.right > fireRect.left &&
+                playerRect.top < fireRect.bottom &&
+                playerRect.bottom > fireRect.top) {
+                
+                console.log("Local player hit by fire!");
+                player.die();
+                
+                // Sync death over network
+                if (player.myNetState) {
+                    player.myNetState.setState("isDead", true);
+                }
+                return;
+            }
+        }
+    }
+
+    // Check remote players
+    for (const id in remotePlayers) {
+        const { object: remotePlayer } = remotePlayers[id];
+        if (remotePlayer && !remotePlayer.isDead && remotePlayer.hitboxElement) {
+            const playerRect = remotePlayer.hitboxElement.getBoundingClientRect();
+            
+            for (const fireRect of fireRects) {
+                if (playerRect.left < fireRect.right &&
+                    playerRect.right > fireRect.left &&
+                    playerRect.top < fireRect.bottom &&
+                    playerRect.bottom > fireRect.top) {
+                    
+                    console.log(`Remote player ${id} hit by fire!`);
+                    remotePlayer.die();
+                    
+                    // Sync death state
+                    if (remotePlayer.myNetState) {
+                        remotePlayer.myNetState.setState("isDead", true);
+                    }
+                    break;
+                }
+            }
+        }
+    }
+}

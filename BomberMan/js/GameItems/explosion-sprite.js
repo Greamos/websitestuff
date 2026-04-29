@@ -14,9 +14,6 @@ export class ExplosionSprite {
     this._animTimer = null;
   }
 
-
-  // explosion-sprite.js
-
 _setSpriteFrameByIndex(index) {
   if (!this._spriteMeta) return;
   const meta = this._spriteMeta;
@@ -77,6 +74,24 @@ render(gridApi) {
     this._startAnimation();
   }
 
+  // Create fire hitbox if it doesn't exist
+  if (!this.hitboxElement) {
+    this.hitboxElement = document.createElement('div');
+    this.hitboxElement.className = 'fire-hitbox';
+    this.hitboxElement.style.width = '48px';
+    this.hitboxElement.style.height = '48px';
+    gridApi.container.appendChild(this.hitboxElement);
+  }
+
+  // Create extra hitbox for directional tips if it doesn't exist
+  if (!this.extraHitboxElement) {
+    this.extraHitboxElement = document.createElement('div');
+    this.extraHitboxElement.className = 'fire-hitbox';
+    this.extraHitboxElement.style.width = '48px';
+    this.extraHitboxElement.style.height = '48px';
+    gridApi.container.appendChild(this.extraHitboxElement);
+  }
+
   const cell = gridApi.getCell(this.x, this.y);
   if (cell && this.el) {
     const gridRect = gridApi.container.getBoundingClientRect();
@@ -93,6 +108,83 @@ render(gridApi) {
     const rotations = { 'up': 270, 'right': 0, 'down': 90, 'left': 180 };
     const rotation = this.direction ? (rotations[this.direction] || 0) : 0;
     this.el.style.transform = `translate(-50%, -50%) rotate(${rotation}deg)`;
+
+    // Adjust hitbox size and position based on stage and direction
+    let hitboxWidth = 48;
+    let hitboxHeight = 48;
+    let offsetX = 0;
+    let offsetY = 0;
+
+    // For directional tips, make hitbox match the fire direction
+    if (this.stage === 'directional') {
+      if (this.direction === 'up') {
+        hitboxWidth = 40;
+        hitboxHeight = 24;
+        offsetX = 0;
+        offsetY = -16; // Push upward to align with fire tip
+      } else if (this.direction === 'down') {
+        hitboxWidth = 40;
+        hitboxHeight = 24;
+        offsetX = 0;
+        offsetY = 16;  // Push downward
+      } else if (this.direction === 'left') {
+        hitboxWidth = 24;
+        hitboxHeight = 40;
+        offsetX = -16; // Push left
+        offsetY = 0;
+      } else if (this.direction === 'right') {
+        hitboxWidth = 24;
+        hitboxHeight = 40;
+        offsetX = 16;  // Push right
+        offsetY = 0;
+      }
+    } 
+    // For middle stage (straight beams), also adjust based on direction
+    else if (this.stage === 'middle') {
+      if (this.direction === 'up' || this.direction === 'down') {
+        hitboxWidth = 40;
+        hitboxHeight = 48;
+        offsetY = 0;
+      } else if (this.direction === 'left' || this.direction === 'right') {
+        hitboxWidth = 48;
+        hitboxHeight = 40;
+        offsetX = 0;
+      }
+    }
+
+    // Position hitbox at center, then apply offset
+    this.hitboxElement.style.width = `${hitboxWidth}px`;
+    this.hitboxElement.style.height = `${hitboxHeight}px`;
+    this.hitboxElement.style.left = `${centerX - hitboxWidth / 2 + offsetX}px`;
+    this.hitboxElement.style.top = `${centerY - hitboxHeight / 2 + offsetY}px`;
+    this.hitboxElement.style.transform = `translate(0, 0)`; // No rotation needed since we adjust size
+
+    // Position extra hitbox for directional tips
+    if (this.stage === 'directional') {
+      let extraWidth = 35;
+      let extraHeight = 35;
+      let extraOffsetX = 0;
+      let extraOffsetY = 0;
+
+      if (this.direction === 'up') {
+        extraOffsetY = offsetY - -24; // Connect to top edge of directional
+      } else if (this.direction === 'down') {
+        extraOffsetY = offsetY + -24; // Connect to bottom edge of directional
+      } else if (this.direction === 'left') {
+        extraOffsetX = offsetX - -24; // Connect to left edge of directional
+      } else if (this.direction === 'right') {
+        extraOffsetX = offsetX + -24; // Connect to right edge of directional
+      }
+
+      this.extraHitboxElement.style.width = `${extraWidth}px`;
+      this.extraHitboxElement.style.height = `${extraHeight}px`;
+      this.extraHitboxElement.style.left = `${centerX - extraWidth / 2 + extraOffsetX}px`;
+      this.extraHitboxElement.style.top = `${centerY - extraHeight / 2 + extraOffsetY}px`;
+    } else {
+      // Hide extra hitbox if not in directional stage
+      this.extraHitboxElement.style.width = '0px';
+      this.extraHitboxElement.style.height = '0px';
+    }
   }
 }
 
@@ -116,5 +208,7 @@ render(gridApi) {
   destroy() {
     if (this._animTimer) clearInterval(this._animTimer);
     this.el?.remove();
+    this.hitboxElement?.remove();
+    this.extraHitboxElement?.remove();
   }
 }
