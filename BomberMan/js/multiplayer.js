@@ -2,7 +2,7 @@
 
 
 import * as Playroom from "https://esm.sh/playroomkit";
-import { Player } from './player.js';
+import { playerv2 } from './playerv2.js';
 import { findAllSpawns } from './grid.js'; 
 
 export const remotePlayers = {};
@@ -35,7 +35,7 @@ export async function initMultiplayer(gridApi, assets, options = {}) {
 
 
             // 4. Create Player
-            const p = new Player(state.id, assets.player.idle, { loadedAssets: assets.loaded , myNetState: state, hue: playerHue});
+            const p = new playerv2(state.id, assets.player.idle, { loadedAssets: assets.loaded , myNetState: state, hue: playerHue});
             p.place(gridApi, spawnPoint.x, spawnPoint.y);
 
             // 5. Identify Local Player

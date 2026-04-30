@@ -333,9 +333,9 @@ moveTo(gridApi, newX, newY, force = false) { //da movement code yas//
     const cellRect = targetCell.getBoundingClientRect();
     const left = cellRect.left - gridRect.left + cellRect.width / 2;
     const top = cellRect.top - gridRect.top + cellRect.height / 2;
-const visualNudgeY = -12; 
-this.img.style.left = `${left}px`;
-this.img.style.top = `${top + visualNudgeY}px`;
+    const visualNudgeY = -12; 
+    this.img.style.left = `${left}px`;
+    this.img.style.top = `${top + visualNudgeY}px`;
 
     // Move hitbox with player
     if (this.hitboxElement) {

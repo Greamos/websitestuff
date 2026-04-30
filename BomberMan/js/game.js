@@ -20,8 +20,22 @@ const GRID_ID = 'game-grid';
 // --- PERSISTENCE TRACKING ---
 let lastNetX = null; 
 let lastNetY = null;
+const keys = {};
 const lastBombIds = {};
 let mapSyncTimer = 0; // Timer for checking the room map
+
+
+window.addEventListener("keydown", (e) => {
+    keys[e.code] = true;
+    console.log("Key down:", e.code);
+});
+
+window.addEventListener("keyup", (e) => {
+    keys[e.code] = false;
+});
+
+
+
 
 // --- GAME STATE ---
 let hbTimer = 0;
@@ -130,8 +144,14 @@ document.addEventListener('DOMContentLoaded', async () => {
     startTick((deltaTime) => {
         if (!player) return; 
 
-        // 0. Update local player movement
-        updateMovement(); 
+        let currentDir = null;
+            if (keys["ArrowUp"] || keys["KeyW"])         currentDir = "up";
+            else if (keys["ArrowDown"] || keys["KeyS"])  currentDir = "down";
+            else if (keys["ArrowLeft"] || keys["KeyA"])  currentDir = "left";
+            else if (keys["ArrowRight"] || keys["KeyD"]) currentDir = "right";
+
+            // Now call the NEW player update
+            player.update(currentDir, gridApi);
 
         // Check collision between player hitbox and fire hitboxes
         checkFireCollision(player, gridApi); 
