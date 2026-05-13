@@ -2,7 +2,7 @@
 
 
 import * as Playroom from "https://esm.sh/playroomkit";
-import { playerv2 } from './playerv2.js';
+import { playerv2 } from './PlayerV2.js';
 import { findAllSpawns } from './grid.js'; 
 
 export const remotePlayers = {};
