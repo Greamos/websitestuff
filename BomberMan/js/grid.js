@@ -20,7 +20,7 @@ export const TILE_TYPE = { // for getting data on grid
     [TILE_TYPE.box]: { walkable: false, breakable: true },
     [TILE_TYPE.bomb]: { walkable: false, breakable: false },
     [TILE_TYPE.walltop] : {walkable: false, breakable: false},
-    [TILE_TYPE.explosion]: { walkable: true, breakable: false, damage: true },
+    [TILE_TYPE.explosion]: { walkable: false, breakable: false, damage: true },
     [TILE_TYPE.powerup]: { walkable: true, breakable: true, powerup: true },
     [TILE_TYPE.player]: { walkable: false, breakable: false, player: true },
     [TILE_TYPE.playerspawn]: { walkable: true, breakable: false, spawn: true },

@@ -1,0 +1,276 @@
+# Documentation Table of Contents
+
+- [Introduction](https://docs.joinplayroom.com/)
+  - Introduction
+- [api-reference](https://docs.joinplayroom.com/api-reference)
+  - API Reference
+- [JavaScript API](https://docs.joinplayroom.com/api-reference/js)
+  - Playroom Kit JavaScript/TypeScript API reference
+- [addBot](https://docs.joinplayroom.com/api-reference/js/addBot)
+  - Adds a bot to the room.
+- [Bot](https://docs.joinplayroom.com/api-reference/js/Bot)
+  - Represents a bot or automated player.
+- [BotOptions](https://docs.joinplayroom.com/api-reference/js/BotOptions)
+  - Bot instantiation and configuration options.
+- [ButtonOptions](https://docs.joinplayroom.com/api-reference/js/ButtonOptions)
+  - Options for Joystick buttons.
+- [Color](https://docs.joinplayroom.com/api-reference/js/Color)
+  - Color object representation.
+- [getDiscordAccessToken](https://docs.joinplayroom.com/api-reference/js/getDiscordAccessToken)
+  - Returns the Discord access token of the current user.
+- [getDiscordClient](https://docs.joinplayroom.com/api-reference/js/getDiscordClient)
+  - Returns an authenticated Discord client.
+- [getDiscordSDK](https://docs.joinplayroom.com/api-reference/js/getDiscordSDK)
+  - Returns the Discord SDK object.
+- [getRoomCode](https://docs.joinplayroom.com/api-reference/js/getRoomCode)
+  - Returns the 4-letter room code of the current room.
+- [getState](https://docs.joinplayroom.com/api-reference/js/getState)
+  - Returns the current value of a given key in the global game state.
+- [InitOptions](https://docs.joinplayroom.com/api-reference/js/InitOptions)
+  - Options for initializing a Playroom session.
+- [insertCoin](https://docs.joinplayroom.com/api-reference/js/insertCoin)
+  - Initialize Playroom and start the multiplayer session.
+- [isHost](https://docs.joinplayroom.com/api-reference/js/isHost)
+  - Returns true if the current player is the host.
+- [isStreamScreen](https://docs.joinplayroom.com/api-reference/js/isStreamScreen)
+  - Returns true if the current screen is the stream screen.
+- [Joystick](https://docs.joinplayroom.com/api-reference/js/Joystick)
+  - A component that renders a joystick controller. The joystick can be used to control the player's position in the game.
+- [JoystickController](https://docs.joinplayroom.com/api-reference/js/JoystickController)
+  - Joystick controller for a player.
+- [JoystickOptions](https://docs.joinplayroom.com/api-reference/js/JoystickOptions)
+  - Options for creating a Joystick.
+- [MatchmakingOptions](https://docs.joinplayroom.com/api-reference/js/MatchmakingOptions)
+  - Matchmaking configuration options.
+- [myPlayer](https://docs.joinplayroom.com/api-reference/js/myPlayer)
+  - Returns the current player's PlayerState.
+- [onDisconnect](https://docs.joinplayroom.com/api-reference/js/onDisconnect)
+  - Register a callback that will be called when the current player disconnects.
+- [onPlayerJoin](https://docs.joinplayroom.com/api-reference/js/onPlayerJoin)
+  - Registers a callback when a new player joins the room.
+- [onTikTokLiveEvent](https://docs.joinplayroom.com/api-reference/js/onTikTokLiveEvent)
+  - Register a callback that will be called when a live event is received from TikTok. Returns a function that can be called to unsubscribe the callback.
+- [openDiscordInviteDialog](https://docs.joinplayroom.com/api-reference/js/openDiscordInviteDialog)
+  - Opens a Discord invite dialog.
+- [PlayerProfile](https://docs.joinplayroom.com/api-reference/js/PlayerProfile)
+  - Player profile object.
+- [PlayerState](https://docs.joinplayroom.com/api-reference/js/PlayerState)
+  - Represents a player in the room.
+- [resetPlayersStates](https://docs.joinplayroom.com/api-reference/js/resetPlayersStates)
+  - Resets all players' states to their default values.
+- [resetStates](https://docs.joinplayroom.com/api-reference/js/resetStates)
+  - Resets all global game states to their default values.
+- [RPC](https://docs.joinplayroom.com/api-reference/js/RPC)
+  - Remote Procedure Call (RPC) system.
+- [call](https://docs.joinplayroom.com/api-reference/js/RPC/call)
+  - Call a remote procedure call (RPC) with the given name and data.
+- [register](https://docs.joinplayroom.com/api-reference/js/RPC/register)
+  - Register a callback that will be called when a remote procedure call (RPC) with the given name is received from a player. The callback will be called with the data sent by the other player and the PlayerState object of the caller.
+- [setState](https://docs.joinplayroom.com/api-reference/js/setState)
+  - Sets a value in the global game state.
+- [startMatchmaking](https://docs.joinplayroom.com/api-reference/js/startMatchmaking)
+  - Starts matchmaking manually if not passed in insertCoin.
+- [TikTokLiveEvent](https://docs.joinplayroom.com/api-reference/js/TikTokLiveEvent)
+  - The TikTokLiveEvent interface represents a live event sent from TikTok to the game.
+- [transferHost](https://docs.joinplayroom.com/api-reference/js/transferHost)
+  - Transfers host privileges to another player.
+- [waitForPlayerState](https://docs.joinplayroom.com/api-reference/js/waitForPlayerState)
+  - Returns a promise that resolves to the state value only when the player state has the given key set, to any truthy value.
+- [waitForState](https://docs.joinplayroom.com/api-reference/js/waitForState)
+  - Returns a promise that resolves to the state value only when the game state has the given key set, to any truthy value.
+- [ZoneOptions](https://docs.joinplayroom.com/api-reference/js/ZoneOptions)
+  - Zone configuration for Joystick.
+- [React Hooks](https://docs.joinplayroom.com/api-reference/react)
+  - Playroom Kit React hooks API reference
+- [useIsHost](https://docs.joinplayroom.com/api-reference/react/useIsHost)
+  - Returns true if the current player is the host of the game.
+- [useMultiplayerState](https://docs.joinplayroom.com/api-reference/react/useMultiplayerState)
+  - Use this hook to listen and update a value in the Playroom state. The value will be synced across all players.
+- [usePlayersList](https://docs.joinplayroom.com/api-reference/react/usePlayersList)
+  - Returns PlayerState objects for all players in the game. Use this hook to get a list of all players in the game. The list will be updated as players join and leave the game.
+- [usePlayersState](https://docs.joinplayroom.com/api-reference/react/usePlayersState)
+  - This will give you a list of all players and their state values for a given key. The list will be updated as players state change. This is useful for displaying a list of players and their state values like scores.
+- [usePlayerState](https://docs.joinplayroom.com/api-reference/react/usePlayerState)
+  - Use this hook to listen and update a value in a player's state.
+- [unity](https://docs.joinplayroom.com/api-reference/unity)
+  - Unity (C#) API
+- [billing](https://docs.joinplayroom.com/billing)
+  - Billing & Pricing
+- [Playroom Kit Updates](https://docs.joinplayroom.com/blog)
+  - Playroom Kit Updates
+- [5M+ Players on Discord Game](https://docs.joinplayroom.com/blog/5mil)
+  - 5M+ Players on Discord Game
+- [GDC & Playroom AI Engine](https://docs.joinplayroom.com/blog/april23)
+  - GDC & Playroom AI Engine
+- [Launches, Learnings and Templates!](https://docs.joinplayroom.com/blog/august23)
+  - Launches, Learnings and Templates!
+- [Playroom partners with Axie Infinity](https://docs.joinplayroom.com/blog/axiegamejam23)
+  - Playroom partners with Axie Infinity
+- [Case Study: Building and Scaling a Multiplayer AI Game on Discord](https://docs.joinplayroom.com/blog/casestudy)
+  - Case Study: Building and Scaling a Multiplayer AI Game on Discord
+- [Playroom joins Cloudflare Launchpad](https://docs.joinplayroom.com/blog/cloudflare24)
+  - Playroom joins Cloudflare Launchpad
+- [December Update: Death by AI, Twitch Insights and Godot](https://docs.joinplayroom.com/blog/december23)
+  - December Update: Death by AI, Twitch Insights and Godot
+- [Discord Activity Playbook](https://docs.joinplayroom.com/blog/discordplaybook)
+  - Discord Activity Playbook
+- [New Multiplayer Modes, Tiktok & Stats](https://docs.joinplayroom.com/blog/feb24)
+  - New Multiplayer Modes, Tiktok & Stats
+- [Gaming Market Report](https://docs.joinplayroom.com/blog/feb24marketreport)
+  - Gaming Market Report
+- [Multiplayer & AI Trivia](https://docs.joinplayroom.com/blog/february23)
+  - Multiplayer & AI Trivia
+- [Playroom GDC Announcement](https://docs.joinplayroom.com/blog/gdc24)
+  - Playroom GDC Announcement
+- [Playroom Highlights: Let's review last 6 months](https://docs.joinplayroom.com/blog/highlights23)
+  - Playroom Highlights: Let's review last 6 months
+- [AssemblyAI Hack Winner & SDK](https://docs.joinplayroom.com/blog/january23)
+  - AssemblyAI Hack Winner & SDK
+- [YouTuber joins Playroom and GameJam](https://docs.joinplayroom.com/blog/july23)
+  - YouTuber joins Playroom and GameJam
+- [Bunch partnership and Multiplayer Kit](https://docs.joinplayroom.com/blog/june23)
+  - Bunch partnership and Multiplayer Kit
+- [Game making with AI](https://docs.joinplayroom.com/blog/march23)
+  - Game making with AI
+- [SDK & AI Game Editor](https://docs.joinplayroom.com/blog/may23)
+  - SDK & AI Game Editor
+- [Multiplayer Edge Cases](https://docs.joinplayroom.com/blog/multiplayeredgecases)
+  - Multiplayer Edge Cases
+- [Making a multiplayer game is not simple](https://docs.joinplayroom.com/blog/multiplayerhard)
+  - Making a multiplayer game is not simple
+- [October & November Update: Community-driven Success](https://docs.joinplayroom.com/blog/october23)
+  - October & November Update: Community-driven Success
+- [Vibe code multiplayer apps with Playroom Kit](https://docs.joinplayroom.com/blog/playroom-kit-for-vibe-coding)
+  - Vibe code multiplayer apps with Playroom Kit
+- [Tech Milestones, Developers and Games](https://docs.joinplayroom.com/blog/september23)
+  - Tech Milestones, Developers and Games
+- [Streamers Drive Explosive Demand for Social Multiplayer Games](https://docs.joinplayroom.com/blog/streamersdemand)
+  - Streamers Drive Explosive Demand for Social Multiplayer Games
+- [Game Industry Veteran joins Playroom](https://docs.joinplayroom.com/blog/tim)
+  - Game Industry Veteran joins Playroom
+- [Making Playroom's JavaScript Plugin for Unity](https://docs.joinplayroom.com/blog/unityweb)
+  - As we launch our Unity plugin, I wanted to share some of the learnings from the process.
+- [WebXR, Vision Pro, and Multiplayer](https://docs.joinplayroom.com/blog/webxr)
+  - I got hands on the Vision Pro device for a day with XCode set up 🎉
+- [changelog](https://docs.joinplayroom.com/changelog)
+  - Version Changes
+- [comparison](https://docs.joinplayroom.com/comparison)
+  - How is Playroom Kit different?
+- [components](https://docs.joinplayroom.com/components)
+  - Features
+- [adding-playroomkit-to-your-existing-stack](https://docs.joinplayroom.com/concepts/adding-playroomkit-to-your-existing-stack)
+  - Playroom Kit 🤝 Your existing stack
+- [ai-features](https://docs.joinplayroom.com/concepts/ai-features)
+  - Vibe Coding Friendly
+- [types-of-experiences](https://docs.joinplayroom.com/concepts/types-of-experiences)
+  - Types of experiences
+- [Errors](https://docs.joinplayroom.com/errors)
+  - Reference for API and client errors from Playroom Kit.
+- [no-game-id](https://docs.joinplayroom.com/errors/no-game-id)
+  - No gameId provided in insertCoin
+- [examples](https://docs.joinplayroom.com/examples)
+  - Examples built with Playroom Kit
+- [2d-parkour-game](https://docs.joinplayroom.com/examples/2d-parkour-game)
+  - {/* * Metadata:
+- [cars-on-the-roof-game](https://docs.joinplayroom.com/examples/cars-on-the-roof-game)
+  - {/* * Metadata:
+- [collaborative-text-editor](https://docs.joinplayroom.com/examples/collaborative-text-editor)
+  - {/*
+- [fall-guys-clone](https://docs.joinplayroom.com/examples/fall-guys-clone)
+  - {/*
+- [live-canvas](https://docs.joinplayroom.com/examples/live-canvas)
+  - {/*
+- [live-cursors](https://docs.joinplayroom.com/examples/live-cursors)
+  - {/* * Metadata:
+- [multiplayer-card-game](https://docs.joinplayroom.com/examples/multiplayer-card-game)
+  - {/*
+- [multiplayer-game-lobby](https://docs.joinplayroom.com/examples/multiplayer-game-lobby)
+  - {/*
+- [multiplayer-shooter-game](https://docs.joinplayroom.com/examples/multiplayer-shooter-game)
+  - {/*
+- [pictionary-drawing-game](https://docs.joinplayroom.com/examples/pictionary-drawing-game)
+  - {/*
+- [plane-rings](https://docs.joinplayroom.com/examples/plane-rings)
+  - {/*
+- [tiktok-live-game](https://docs.joinplayroom.com/examples/tiktok-live-game)
+  - {/* * Metadata:
+- [turn-web-game-into-executable](https://docs.joinplayroom.com/examples/turn-web-game-into-executable)
+  - {/* ## 📦 Metadata
+- [persistence](https://docs.joinplayroom.com/features/apps/persistence)
+  - This API is a pro feature and currently in Free Trial.
+- [state](https://docs.joinplayroom.com/features/apps/state)
+  - State (synced state)
+- [bots](https://docs.joinplayroom.com/features/games/bots)
+  - Bots in Playroom
+- [gamepads](https://docs.joinplayroom.com/features/games/gamepads)
+  - Connect Gamepad Controllers to Your Game
+- [joystick](https://docs.joinplayroom.com/features/games/joystick)
+  - Customizable On-screen Joystick
+- [lobby](https://docs.joinplayroom.com/features/games/lobby)
+  - Lobby
+- [matchmaking](https://docs.joinplayroom.com/features/games/matchmaking)
+  - Multiplayer Matchmaking
+- [mobile](https://docs.joinplayroom.com/features/games/mobile)
+  - Multiplayer Games on Web & Mobile
+- [RPCs](https://docs.joinplayroom.com/features/games/rpc)
+  - RPCs in Playroom Kit
+- [stream](https://docs.joinplayroom.com/features/games/stream)
+  - Multiplayer Experience with Stream Mode
+- [turnbased](https://docs.joinplayroom.com/features/games/turnbased)
+  - This API requires Persistent API which is a pro feature and currently in Free Trial.
+- [discord](https://docs.joinplayroom.com/features/integrations/discord)
+  - Make Multiplayer Games for Discord Activities
+- [tiktok](https://docs.joinplayroom.com/features/integrations/tiktok)
+  - TikTok Live API is very experimental and can break at any time. Please set your expectations accordingly.
+- [frameworks](https://docs.joinplayroom.com/frameworks)
+  - Frameworks
+- [cocos](https://docs.joinplayroom.com/frameworks/games/cocos)
+  - Using Playroom Kit with Cocos Creator
+- [godot](https://docs.joinplayroom.com/frameworks/games/godot)
+  - Using Playroom Kit with Godot 3 & 4 (Web only)
+- [kaplay](https://docs.joinplayroom.com/frameworks/games/kaplay)
+  - Using KAPLAY with Playroom Kit
+- [phaser](https://docs.joinplayroom.com/frameworks/games/phaser)
+  - Phaser
+- [pixijs](https://docs.joinplayroom.com/frameworks/games/pixijs)
+  - PixiJS
+- [playcanvas](https://docs.joinplayroom.com/frameworks/games/playcanvas)
+  - Using PlayCanvas with Playroom Kit
+- [spline](https://docs.joinplayroom.com/frameworks/games/spline)
+  - Using Spline with Playroom Kit
+- [threejs](https://docs.joinplayroom.com/frameworks/games/threejs)
+  - Using Three.js with Playroom Kit
+- [unity](https://docs.joinplayroom.com/frameworks/games/unity)
+  - Using Unity with Playroom Kit
+- [angular](https://docs.joinplayroom.com/frameworks/web/angular)
+  - Using Angular with Playroom Kit
+- [nextjs](https://docs.joinplayroom.com/frameworks/web/nextjs)
+  - Using Next.js with Playroom Kit
+- [r3f](https://docs.joinplayroom.com/frameworks/web/r3f)
+  - Using React Three Fiber with Playroom Kit
+- [react](https://docs.joinplayroom.com/frameworks/web/react)
+  - Using React with Playroom Kit
+- [remix](https://docs.joinplayroom.com/frameworks/web/remix)
+  - Using Remix with Playroom Kit
+- [vue](https://docs.joinplayroom.com/frameworks/web/vue)
+  - Using Vue.js with Playroom Kit
+- [mcp](https://docs.joinplayroom.com/mcp)
+  - MCP Server
+- [firebase](https://docs.joinplayroom.com/migration-guides/firebase)
+  - Migrating from Firebase
+- [hathora](https://docs.joinplayroom.com/migration-guides/hathora)
+  - Migrating from Hathora
+- [netcode](https://docs.joinplayroom.com/migration-guides/netcode)
+  - Migrating from Photon, Fishnet, Mirror, and other "Unity" stacks
+- [partykit](https://docs.joinplayroom.com/migration-guides/partykit)
+  - Migrating from PartyKit
+- [supabase](https://docs.joinplayroom.com/migration-guides/supabase)
+  - Migrating from Supabase
+- [multiplayer](https://docs.joinplayroom.com/multiplayer)
+  - Adding real-time collaboration
+- [setup](https://docs.joinplayroom.com/setup)
+  - Get started
+- [templates](https://docs.joinplayroom.com/templates)
+  - Templates and Starter Kits
+- [tutorials](https://docs.joinplayroom.com/tutorials)
+  - Tutorials

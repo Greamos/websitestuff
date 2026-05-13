@@ -1,5 +1,5 @@
 import { getState, setState, isHost, RPC } from "https://esm.sh/playroomkit"; 
-import { Player } from './player.js';
+import { playerv2 as Player } from './PlayerV2.js';
 import { Bomb } from './bomb.js';
 import { bindArrowKeys } from './input.js';
 import { assets, preloadAssets } from './assets.js';
@@ -7,7 +7,6 @@ import level1 from '../maps/Level1.js';
 import {
   createGrid,
   buildFromMap,
-  findAllSpawns,
   TILE_TYPE,
 } from './grid.js';
 import { startTick } from './tick.js';
@@ -20,18 +19,41 @@ const GRID_ID = 'game-grid';
 // --- PERSISTENCE TRACKING ---
 let lastNetX = null; 
 let lastNetY = null;
+let lastNetFacing = null;
 const keys = {};
+let lastDirection = null; // Most-recently-pressed movement direction
 const lastBombIds = {};
-let mapSyncTimer = 0; // Timer for checking the room map
+// let mapSyncTimer = 0; // DEAD: declared but never read
 
+const keyToDir = {
+    "ArrowUp": "up", "KeyW": "up",
+    "ArrowDown": "down", "KeyS": "down",
+    "ArrowLeft": "left", "KeyA": "left",
+    "ArrowRight": "right", "KeyD": "right",
+};
 
 window.addEventListener("keydown", (e) => {
     keys[e.code] = true;
+    // Track most recently pressed movement key
+    if (keyToDir[e.code]) {
+        lastDirection = keyToDir[e.code];
+    }
     console.log("Key down:", e.code);
 });
 
 window.addEventListener("keyup", (e) => {
     keys[e.code] = false;
+    // If we released the current direction, find another held direction to fall back to
+    if (keyToDir[e.code] && lastDirection === keyToDir[e.code]) {
+        lastDirection = null;
+        // Check all held keys for a fallback
+        for (const [code, dir] of Object.entries(keyToDir)) {
+            if (keys[code]) {
+                lastDirection = dir;
+                break;
+            }
+        }
+    }
 });
 
 
@@ -50,11 +72,12 @@ export function scheduleTask(ms, callback) {
   return newTask; 
 }
 
-export function getPlayerCoords() {
-  const p = (typeof window !== 'undefined' && window.__game && window.__game.player) || null;
-  if (!p || p.x == null || p.y == null) return null;
-  return { x: p.x, y: p.y, id: p.id };
-}
+// DEAD: exported but never imported (explosion.js uses gridApi.getPlayerCoords() instead)
+// export function getPlayerCoords() {
+//   const p = (typeof window !== 'undefined' && window.__game && window.__game.player) || null;
+//   if (!p || p.x == null || p.y == null) return null;
+//   return { x: p.x, y: p.y, id: p.id };
+// }
 
 export function findBombAt(x, y) {
     return ActiveBombArr.find(b => b.x === x && b.y === y);
@@ -131,8 +154,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     gridApi.map = gameMap;
     buildFromMap(gridApi, gameMap);
 
-    // 6. Bind Inputs
-    const updateMovement = bindArrowKeys(player, gridApi, { activeBombs: ActiveBombArr, loadedAssets: loaded });
+    // 6. Bind Inputs (sets up Space/P/E key listeners; old grid movement now handled by PlayerV2.update())
+    bindArrowKeys(player, gridApi, { activeBombs: ActiveBombArr, loadedAssets: loaded });
 
     // Global reference for debugging
     window.__game = { gridApi, player, assetsLoaded: loaded, myNetState }; 
@@ -144,22 +167,25 @@ document.addEventListener('DOMContentLoaded', async () => {
     startTick((deltaTime) => {
         if (!player) return; 
 
-        let currentDir = null;
-            if (keys["ArrowUp"] || keys["KeyW"])         currentDir = "up";
-            else if (keys["ArrowDown"] || keys["KeyS"])  currentDir = "down";
-            else if (keys["ArrowLeft"] || keys["KeyA"])  currentDir = "left";
-            else if (keys["ArrowRight"] || keys["KeyD"]) currentDir = "right";
-
-            // Now call the NEW player update
-            player.update(currentDir, gridApi);
+        // Most-recently-pressed direction wins (classic Bomberman behavior)
+            player.update(lastDirection, gridApi);
 
         // Check collision between player hitbox and fire hitboxes
         checkFireCollision(player, gridApi); 
 
-        // 1. UPLOAD (Your position to others)
-        if (myNetState && (player.x !== lastNetX || player.y !== lastNetY)) {
-            myNetState.setState("pos", { x: player.x, y: player.y }, false);
+        // Interpolate remote players toward network targets (smooth movement)
+        for (const id in remotePlayers) {
+            const { object } = remotePlayers[id];
+            if (object && !object.isDead) {
+                object.lerpToNetwork(deltaTime);
+            }
+        }
+
+        // 1. UPLOAD (Your position + facing direction to others)
+        if (myNetState && (player.x !== lastNetX || player.y !== lastNetY || player.facing !== lastNetFacing)) {
+            myNetState.setState("pos", { x: player.x, y: player.y, facing: player.facing }, false);
             lastNetX = player.x; lastNetY = player.y;
+            lastNetFacing = player.facing;
         }
 
         // 2. DOWNLOAD (Sync other players)
@@ -173,10 +199,10 @@ document.addEventListener('DOMContentLoaded', async () => {
                 continue; 
             }
 
-            // B. Sync Movement
+            // B. Sync Movement (smooth interpolation instead of snap)
             const targetPos = state.getState("pos");
             if (targetPos && (object.x !== targetPos.x || object.y !== targetPos.y)) {
-                object.moveTo(gridApi, targetPos.x, targetPos.y, true);
+                object.setNetworkTarget(targetPos.x, targetPos.y, targetPos.facing);
             }
 
             // C. Sync Bombs

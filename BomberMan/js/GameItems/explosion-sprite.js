@@ -58,6 +58,14 @@ _initSpriteMetadata() {
 }
 
 render(gridApi) {
+  // Safety: If coordinates are invalid, don't render — silently bail.
+  // An element appended without positioning defaults to top-left (0,0), which looks like a random fire sprite.
+  const cell = gridApi.getCell(this.x, this.y);
+  if (!cell) {
+    console.warn(`ExplosionSprite: invalid cell at (${this.x}, ${this.y}) — skipping render`);
+    return;
+  }
+
   if (!this.el) {
     const div = document.createElement('div');
     div.className = 'explosion-sprite';
@@ -83,17 +91,7 @@ render(gridApi) {
     gridApi.container.appendChild(this.hitboxElement);
   }
 
-  // Create extra hitbox for directional tips if it doesn't exist
-  if (!this.extraHitboxElement) {
-    this.extraHitboxElement = document.createElement('div');
-    this.extraHitboxElement.className = 'fire-hitbox';
-    this.extraHitboxElement.style.width = '48px';
-    this.extraHitboxElement.style.height = '48px';
-    gridApi.container.appendChild(this.extraHitboxElement);
-  }
-
-  const cell = gridApi.getCell(this.x, this.y);
-  if (cell && this.el) {
+  if (this.el) {
     const gridRect = gridApi.container.getBoundingClientRect();
     const cellRect = cell.getBoundingClientRect();
     
@@ -161,29 +159,36 @@ render(gridApi) {
 
     // Position extra hitbox for directional tips
     if (this.stage === 'directional') {
+      // Create extra hitbox on demand if it doesn't exist yet
+      if (!this.extraHitboxElement) {
+        this.extraHitboxElement = document.createElement('div');
+        this.extraHitboxElement.className = 'fire-hitbox';
+        gridApi.container.appendChild(this.extraHitboxElement);
+      }
+      this.extraHitboxElement.style.display = '';
+
       let extraWidth = 35;
       let extraHeight = 35;
       let extraOffsetX = 0;
       let extraOffsetY = 0;
 
       if (this.direction === 'up') {
-        extraOffsetY = offsetY - -24; // Connect to top edge of directional
+        extraOffsetY = offsetY - -24;
       } else if (this.direction === 'down') {
-        extraOffsetY = offsetY + -24; // Connect to bottom edge of directional
+        extraOffsetY = offsetY + -24;
       } else if (this.direction === 'left') {
-        extraOffsetX = offsetX - -24; // Connect to left edge of directional
+        extraOffsetX = offsetX - -24;
       } else if (this.direction === 'right') {
-        extraOffsetX = offsetX + -24; // Connect to right edge of directional
+        extraOffsetX = offsetX + -24;
       }
 
       this.extraHitboxElement.style.width = `${extraWidth}px`;
       this.extraHitboxElement.style.height = `${extraHeight}px`;
       this.extraHitboxElement.style.left = `${centerX - extraWidth / 2 + extraOffsetX}px`;
       this.extraHitboxElement.style.top = `${centerY - extraHeight / 2 + extraOffsetY}px`;
-    } else {
-      // Hide extra hitbox if not in directional stage
-      this.extraHitboxElement.style.width = '0px';
-      this.extraHitboxElement.style.height = '0px';
+    } else if (this.extraHitboxElement) {
+      // Hide extra hitbox for non-directional sprites (was width:0 causing the 1px dot)
+      this.extraHitboxElement.style.display = 'none';
     }
   }
 }

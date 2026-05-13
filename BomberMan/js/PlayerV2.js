@@ -23,8 +23,8 @@ export class playerv2 {
         this.facing = 'down';
         this.isWalking = false;
         this.loadedAssets = options.loadedAssets || null;
-        this.hitboxWidth = 25;  
-        this.hitboxHeight = 20;
+        this.hitboxWidth = 30;  
+        this.hitboxHeight = 30;
     
         // For spritemap: enable this
         this.useSpritesheet = !!(assets && assets.player && assets.player.spritesheet && options.loadedAssets && options.loadedAssets[assets.player.spritesheet]);
@@ -179,7 +179,7 @@ initializeSpritesheet() {
  * Index 0 = top-left, counts left-to-right, top-to-bottom
  */
 showSpriteFrame(frameIndex) {
-    if (!this._spriteMeta) return;
+    if (!this.img || !this._spriteMeta) return;
 
     const meta = this._spriteMeta;
     const column = frameIndex % meta.columns;
@@ -387,19 +387,54 @@ startWalk(direction) {
 update(direction, gridApi) {
     if (this.isDead) return;
 
-    // 1. Handle Animations
+    // Handle Animations
     if (!direction) {
         this.stopWalk();
         return;
-    } else {
-        this.startWalk(direction);
     }
 
-    // 2. Define Hitbox Half-Sizes (Based on your 30x45 hitbox)
+    // Save old direction BEFORE startWalk() overwrites it
+    const oldDirection = this.direction;
+    this.startWalk(direction);
+
     const halfW = this.hitboxWidth / 2;
     const halfH = this.hitboxHeight / 2;
 
-    // 3. Calculate Potential Next Position
+    // ===== GRID SNAPPING ON DIRECTION CHANGE =====
+    // If switching between horizontal and vertical movement,
+    // snap the perpendicular axis to the center of the current tile
+    const prevWasHorizontal = (oldDirection === 'left' || oldDirection === 'right');
+    const nowIsHorizontal = (direction === 'left' || direction === 'right');
+
+    if (prevWasHorizontal !== nowIsHorizontal) {
+        if (nowIsHorizontal) {
+            // Switching to horizontal — snap Y to center of current row
+            this.visualY = this.y * this.cellSize + this.cellSize / 2;
+        } else {
+            // Switching to vertical — snap X to center of current column
+            this.visualX = this.x * this.cellSize + this.cellSize / 2;
+        }
+    }
+
+    // ===== CONTINUOUS AUTO-ALIGNMENT =====
+    // While moving horizontally, nudge toward row center.
+    // While moving vertically, nudge toward column center.
+    // This prevents drifting off-center between direction changes.
+    if (nowIsHorizontal) {
+        const rowCenter = this.y * this.cellSize + this.cellSize / 2;
+        const diff = rowCenter - this.visualY;
+        if (Math.abs(diff) > 0.5) {
+            this.visualY += Math.sign(diff) * Math.min(this.speed, Math.abs(diff));
+        }
+    } else {
+        const colCenter = this.x * this.cellSize + this.cellSize / 2;
+        const diff = colCenter - this.visualX;
+        if (Math.abs(diff) > 0.5) {
+            this.visualX += Math.sign(diff) * Math.min(this.speed, Math.abs(diff));
+        }
+    }
+    // ===============================================
+
     let nextX = this.visualX;
     let nextY = this.visualY;
 
@@ -458,8 +493,12 @@ isTileWalkable(pixelX, pixelY, gridApi) {
     const gy = Math.floor(pixelY / this.cellSize);
     const type = gridApi.getType(gx, gy);
     
-    // Safety check: if out of bounds, treat as not walkable
     if (!TILE_PROPS[type]) return false;
+    
+    // Bombs: walkable only while the player's center is still on that bomb tile
+    if (type === TILE_TYPE.bomb) {
+        return (this.x === gx && this.y === gy);
+    }
     
     return TILE_PROPS[type].walkable;
 }    
@@ -536,7 +575,11 @@ placeBomb() {
 
 die() {
     console.log("Player died!");
-        if (this.img) {
+    
+    // Stop ALL animation timers before removing the DOM element
+    this.stopAnimationLoop();
+    
+    if (this.img) {
         this.img.remove();
         this.img = null;
         this.hitboxElement?.remove();
@@ -560,6 +603,68 @@ moveTo(gridApi, x, y) {
     
     // We need to call a render function to update the CSS
     this.render(); 
+}
+
+// Store network target position for smooth interpolation
+setNetworkTarget(gridX, gridY, facingDirection) {
+    this._netTargetX = gridX;
+    this._netTargetY = gridY;
+    this._netTargetVisualX = gridX * this.cellSize + this.cellSize / 2;
+    this._netTargetVisualY = gridY * this.cellSize + this.cellSize / 2;
+    this._hasNetTarget = true;
+    
+    // Update facing so remote sprites animate correctly
+    if (facingDirection) {
+        this.facing = facingDirection;
+        if (this.isWalking) this.startWalk(facingDirection);
+    }
+}
+
+// Smoothly interpolate toward the network target (call every tick with deltaTime)
+lerpToNetwork(deltaTime) {
+    if (this.isDead || !this.img || !this._hasNetTarget) return;
+    
+    const lerpSpeed = 0.15; // How fast to catch up (0-1, higher = snappier)
+    const threshold = 1.5;   // Stop lerping when within this many pixels
+    
+    const dx = this._netTargetVisualX - this.visualX;
+    const dy = this._netTargetVisualY - this.visualY;
+    const dist = Math.sqrt(dx * dx + dy * dy);
+    
+    if (dist < threshold) {
+        // Close enough — snap to exact target
+        this.visualX = this._netTargetVisualX;
+        this.visualY = this._netTargetVisualY;
+        this.x = this._netTargetX;
+        this.y = this._netTargetY;
+        this._hasNetTarget = false;
+        this.stopWalk();
+        this.isWalking = false;
+    } else {
+        // Smoothly move toward target (frame-rate independent)
+        const factor = 1 - Math.pow(1 - lerpSpeed, deltaTime / 16.67);
+        this.visualX += dx * factor;
+        this.visualY += dy * factor;
+        
+        // Update logical grid position
+        this.x = Math.floor(this.visualX / this.cellSize);
+        this.y = Math.floor(this.visualY / this.cellSize);
+        
+        // Determine facing direction from movement
+        if (Math.abs(dx) > Math.abs(dy)) {
+            this.facing = dx > 0 ? 'right' : 'left';
+        } else {
+            this.facing = dy > 0 ? 'down' : 'up';
+        }
+        
+        if (!this.isWalking) {
+            this.startWalk(this.facing);
+        } else if (this.direction !== this.facing) {
+            this.startWalk(this.facing);
+        }
+    }
+    
+    this.render();
 }
 
 render() {
